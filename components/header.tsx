@@ -31,7 +31,7 @@ export default function Header() {
 
           <SignedIn>
             <Link
-              href="/notes"
+              href="/evals"
               className="hover:underline"
             >
               Evals

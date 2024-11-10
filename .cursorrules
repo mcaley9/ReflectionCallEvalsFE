@@ -11,7 +11,6 @@ Notes is a web app that allows you to manage your notes.
 - Frontend: Next.js, Tailwind, Shadcn, Framer Motion
 - Backend: Supabase, Drizzle, Server Actions
 - Auth: Clerk
-- Payments: Stripe
 
 ## Specification
 

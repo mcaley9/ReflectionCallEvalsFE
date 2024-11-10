@@ -12,8 +12,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Notes App",
-  description: "A full-stack template for a notes app."
+  title: "Reflection Call Evals",
+  description: "A tool to help evaluate InStage reflection calls."
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
