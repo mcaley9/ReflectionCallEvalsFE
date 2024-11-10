@@ -15,9 +15,5 @@ export default async function NotesPage() {
     return redirect("/signup");
   }
 
-  if (profile.membership === "free") {
-    return redirect("/pricing");
-  }
-
   return <div>Notes</div>;
 }

@@ -18,7 +18,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <List className="h-6 w-6" />
-          <div className="text-xl font-bold">Notes App</div>
+          <div className="text-xl font-bold">Reflection Call Evals</div>
         </div>
 
         <nav className="hidden md:flex space-x-4">
@@ -34,7 +34,7 @@ export default function Header() {
               href="/notes"
               className="hover:underline"
             >
-              Notes
+              Evals
             </Link>
           </SignedIn>
         </nav>
