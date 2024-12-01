@@ -2,7 +2,7 @@
 
 import { db } from "@/db/db";
 import { adminResultsInputTable } from "@/db/schema/admin-results-input-schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 
 export interface AdminResultsInput {
   uniqueId: string;
@@ -20,6 +20,21 @@ export async function getAdminResultsInput(uniqueId: string) {
       .select()
       .from(adminResultsInputTable)
       .where(eq(adminResultsInputTable.uniqueId, uniqueId))
+      .orderBy(desc(adminResultsInputTable.createdAt));
+    
+    return results;
+  } catch (error) {
+    console.error('Error fetching admin results input:', error);
+    return [];
+  }
+}
+
+export async function getAdminResultsInputForMultipleIds(uniqueIds: string[]) {
+  try {
+    const results = await db
+      .select()
+      .from(adminResultsInputTable)
+      .where(inArray(adminResultsInputTable.uniqueId, uniqueIds))
       .orderBy(desc(adminResultsInputTable.createdAt));
     
     return results;

@@ -4,7 +4,7 @@ import { Table, TableBody } from "@/components/ui/table";
 import { EvalRow } from "./components/eval-row";
 import { ROW_CONFIGS } from "./constants";
 import { mapSmoothnessToStatus, getOverallStatusDetails } from "./utils";
-import { submitAdminResultsInput } from "@/actions/admin-results-input-actions";
+import { getAdminResultsInputForMultipleIds, type AdminResultsInput } from "../actions/admin-results-input-actions";
 
 // Add metadata for the page
 export const metadata: Metadata = {
@@ -16,11 +16,12 @@ export const metadata: Metadata = {
 export const revalidate = 60; // Revalidate the page every 60 seconds
 
 interface Feedback {
-  phase_type: string | null;
-  feedback_type: 'phase' | 'boss';
+  uniqueId: string;
+  phaseType: string | null;
+  feedbackType: 'phase' | 'boss';
   sentiment: 'up' | 'down' | null;
-  is_flagged: boolean;
-  override_status: string | null;
+  isFlagged: boolean;
+  overrideStatus: string | null;
   comment: string | null;
 }
 
@@ -48,16 +49,31 @@ export default async function EvalsPage({
     isNonNullString(result.uniqueId)
   );
   
-  // Now TypeScript knows uniqueId is definitely a string
-  // Initialize an empty feedbackResults array since getFeedback is commented out
-  const feedbackResults: Feedback[][] = [];
+  // Fetch feedback data for all valid unique IDs
+  const feedbackData = await getAdminResultsInputForMultipleIds(
+    validResults.map(result => result.uniqueId)
+  );
   
-  // Create a map of feedback by uniqueId and phase
-  const feedbackMap = new Map<string, Feedback[]>();
-  feedbackResults.forEach((feedbacks: Feedback[], index: number) => {
-    const uniqueId = validResults[index].uniqueId;
-    if (uniqueId) {  // TypeScript guard
-      feedbackMap.set(uniqueId, feedbacks);
+  // Create a map of feedback by uniqueId and phaseType/feedbackType
+  const feedbackMap = new Map<string, Map<string, AdminResultsInput>>();
+  
+  // Group feedback by uniqueId and phase, keeping only the most recent
+  feedbackData.forEach((feedback: AdminResultsInput) => {
+    const key = feedback.uniqueId;
+    if (!feedbackMap.has(key)) {
+      feedbackMap.set(key, new Map());
+    }
+    
+    // Create a unique key for the phase/feedback type
+    const phaseKey = feedback.feedbackType === 'boss' ? 'overall' : feedback.phaseType || '';
+    
+    // Get the current map of phases for this uniqueId
+    const phasesMap = feedbackMap.get(key)!;
+    
+    // Get all feedback for this phase and sort by updatedAt
+    const existingFeedback = phasesMap.get(phaseKey);
+    if (!existingFeedback || feedback.updatedAt > existingFeedback.updatedAt) {
+      phasesMap.set(phaseKey, feedback);
     }
   });
 
@@ -78,12 +94,9 @@ export default async function EvalsPage({
         ? getOverallStatusDetails(result)
         : config.getDetails?.(result);
 
-      // Only try to get feedback if uniqueId is not null
+      // Get feedback for this uniqueId and phase
       const feedback = result.uniqueId 
-        ? feedbackMap.get(result.uniqueId)?.find((f: Feedback) => 
-            f.phase_type === config.phaseType || 
-            (config.phaseType === 'overall' && f.feedback_type === 'boss')
-          )
+        ? feedbackMap.get(result.uniqueId)?.get(config.phaseType)
         : null;
 
       return {
@@ -91,8 +104,13 @@ export default async function EvalsPage({
         uniqueId: result.uniqueId,
         value,
         details,
-        overrideStatus: feedback?.override_status ?? null,
-        existingFeedback: feedback ?? null
+        overrideStatus: feedback?.overrideStatus ?? null,
+        existingFeedback: feedback ? {
+          sentiment: feedback.sentiment,
+          is_flagged: feedback.isFlagged,
+          override_status: feedback.overrideStatus,
+          comment: feedback.comment
+        } : undefined
       };
     });
 

@@ -6,6 +6,13 @@ interface ResultData {
   uniqueId: string | null;
   value: any;
   details?: string;
+  overrideStatus?: string | null;
+  existingFeedback?: {
+    sentiment: 'up' | 'down' | null;
+    is_flagged: boolean;
+    override_status: string | null;
+    comment: string | null;
+  };
 }
 
 interface EvalRowProps {
@@ -36,6 +43,8 @@ export function EvalRow({
               details={data.details}
               phaseType={phaseType}
               uniqueId={data.uniqueId}
+              overrideStatus={data.overrideStatus}
+              existingFeedback={data.existingFeedback}
             />
           </div>
         </TableCell>

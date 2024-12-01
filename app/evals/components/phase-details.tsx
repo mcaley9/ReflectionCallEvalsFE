@@ -48,7 +48,7 @@ export function PhaseDetails({
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [isFlagged, setIsFlagged] = useState(false);
   const [comment, setComment] = useState('');
-  const [overrideStatus, setOverrideStatus] = useState<string | null>(null);
+  const [overrideStatus, setOverrideStatus] = useState<'yes' | 'partial' | 'no' | 'notreached' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isControlled = controlledOpen !== undefined;

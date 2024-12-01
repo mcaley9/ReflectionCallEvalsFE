@@ -1,45 +1,37 @@
-CREATE TYPE public.feedback_type AS ENUM ('phase', 'boss');
-CREATE TYPE public.feedback_sentiment AS ENUM ('up', 'down');
+create table
+  public."InStageAdmin_Results_Input" (
+    id uuid not null default gen_random_uuid (),
+    unique_id text not null,
+    phase_type text null,
+    feedback_type public.feedback_type not null,
+    sentiment public.feedback_sentiment null,
+    is_flagged boolean not null default false,
+    override_status text null,
+    comment text null,
+    created_at timestamp with time zone not null default current_timestamp,
+    created_by text not null,
+    updated_at timestamp with time zone not null default current_timestamp,
+    updated_by text not null,
+    constraint instageadmin_results_input_pkey primary key (id),
+    constraint unique_feedback_per_phase unique (unique_id, phase_type, feedback_type),
+    constraint fk_combined_results foreign key (unique_id) references "LLM_Boss_Results" (unique_id) on delete cascade,
+    constraint instageadmin_results_input_override_status_check check (
+      (
+        override_status = any (
+          array[
+            'yes'::text,
+            'partial'::text,
+            'no'::text,
+            'notreached'::text,
+            null::text
+          ]
+        )
+      )
+    )
+  ) tablespace pg_default;
 
-CREATE TABLE IF NOT EXISTS public."InStageAdmin_Results_Input" (
-    id UUID NOT NULL DEFAULT gen_random_uuid(),
-    unique_id TEXT NOT NULL, -- matches unique_id from combined_llm_results
-    phase_type TEXT NULL, -- NULL for boss feedback, phase name for phase feedback
-    feedback_type feedback_type NOT NULL,
-    sentiment feedback_sentiment NULL,
-    is_flagged BOOLEAN NOT NULL DEFAULT false,
-    override_status TEXT NULL,
-    comment TEXT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by TEXT NOT NULL, -- store user identifier
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by TEXT NOT NULL, -- store user identifier
+create index if not exists idx_instageadmin_results_input_unique_id on public."InStageAdmin_Results_Input" using btree (unique_id) tablespace pg_default;
 
-    CONSTRAINT InStageAdmin_Results_Input_pkey PRIMARY KEY (id),
-    
-    -- Ensure override_status matches allowed values from transcript results
-    CONSTRAINT InStageAdmin_Results_Input_override_status_check 
-        CHECK (override_status IN ('yes', 'partial', 'no', 'notreached', NULL)),
+create index if not exists idx_instageadmin_results_input_phase_type on public."InStageAdmin_Results_Input" using btree (phase_type) tablespace pg_default;
 
-    -- Create a unique constraint to prevent multiple feedbacks for same phase/boss
-    CONSTRAINT unique_feedback_per_phase 
-        UNIQUE (unique_id, phase_type, feedback_type),
-
-    -- Add foreign key to ensure unique_id exists in results
-    CONSTRAINT fk_combined_results 
-        FOREIGN KEY (unique_id) 
-        REFERENCES public."LLM_Boss_Results" (unique_id) 
-        ON DELETE CASCADE
-);
-
--- Create indexes for better query performance
-CREATE INDEX IF NOT EXISTS idx_InStageAdmin_Results_Input_unique_id 
-    ON public."InStageAdmin_Results_Input" USING btree (unique_id);
-
-CREATE INDEX IF NOT EXISTS idx_InStageAdmin_Results_Input_phase_type 
-    ON public."InStageAdmin_Results_Input" USING btree (phase_type);
-
-CREATE INDEX IF NOT EXISTS idx_InStageAdmin_Results_Input_created_at 
-    ON public."InStageAdmin_Results_Input" USING btree (created_at);
-
-COMMENT ON TABLE public."InStageAdmin_Results_Input" IS 'Stores user feedback for both phase details and LLM boss analysis';
+create index if not exists idx_instageadmin_results_input_created_at on public."InStageAdmin_Results_Input" using btree (created_at) tablespace pg_default;

@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean, uuid } from "drizzle-orm/pg-core";
 
-export const adminResultsInputTable = pgTable('admin_results_input', {
+export const adminResultsInputTable = pgTable('InStageAdmin_Results_Input', {
   id: uuid('id').defaultRandom().primaryKey(),
   uniqueId: text('unique_id').notNull(),
   phaseType: text('phase_type'),
@@ -11,8 +11,8 @@ export const adminResultsInputTable = pgTable('admin_results_input', {
   comment: text('comment'),
   createdBy: text('created_by').notNull(),
   updatedBy: text('updated_by').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull()
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 
 export type AdminResultsInput = typeof adminResultsInputTable.$inferInsert; 
