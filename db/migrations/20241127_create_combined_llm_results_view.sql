@@ -3,6 +3,11 @@ create view
 select
   coalesce(v.id, t.id) as id,
   coalesce(v.session_id::uuid, t.session_id) as session_id,
+  concat(
+    coalesce(v.id, t.id),
+    '_',
+    coalesce(v.session_id::uuid, t.session_id)
+  ) as unique_id,
   v.review_queue_id,
   v.posthog_id,
   t.vapi_call_id,
@@ -53,11 +58,14 @@ select
   case
     when t.id is not null then 'transcript'::text
     else 'no transcript'::text
-  end as has_transcript_data
+  end as has_transcript_data,
+  vr.ai_analysis as vapi_transcript_ai_analysis,
+  pr.ai_analysis as posthog_vision_ai_analysis,
+  vr.transcript
 from
   "LLM_Vision_Results" v
   full join "LLM_Transcript_Results" t on v.session_id::uuid = t.session_id
-  left join "PostHog_Recordings_Review_Queue" pr on v.posthog_id = pr."PostHog_ID"
+  left join "PostHog_Recordings_Review_Queue" pr on v.posthog_id::text = pr."PostHog_ID"::text
   left join "Vapi_Transcripts_Review_Queue" vr on t.vapi_call_id = vr.vapi_call_id
 where
   v.id is not null

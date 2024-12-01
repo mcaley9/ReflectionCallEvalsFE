@@ -13,13 +13,28 @@ interface PhaseDetailsProps {
   phaseType: string;
   details: string | null;
   children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function PhaseDetails({ id, phaseType, details, children }: PhaseDetailsProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function PhaseDetails({ 
+  id, 
+  phaseType, 
+  details, 
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange 
+}: PhaseDetailsProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const onOpenChange = isControlled ? controlledOnOpenChange : setInternalOpen;
 
   const handleClick = () => {
-    setIsOpen(true);
+    if (onOpenChange) {
+      onOpenChange(true);
+    }
   };
 
   const formatDetails = (details: string | null) => {
@@ -37,11 +52,13 @@ export function PhaseDetails({ id, phaseType, details, children }: PhaseDetailsP
 
   return (
     <>
-      <div onClick={handleClick} className="cursor-pointer">
-        {children}
-      </div>
+      {children && (
+        <div onClick={handleClick} className="cursor-pointer">
+          {children}
+        </div>
+      )}
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>

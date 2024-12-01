@@ -3,6 +3,7 @@ import { pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
 export const combinedLLMResults = pgTable("combined_llm_results", {
   id: text("id").primaryKey(),
   sessionId: uuid("session_id"),
+  uniqueId: text("unique_id"),
   reviewQueueId: text("review_queue_id"),
   posthogId: text("posthog_id"),
   vapiCallId: text("vapi_call_id"),

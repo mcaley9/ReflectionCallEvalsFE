@@ -1,4 +1,4 @@
-import { getCombinedLLMResults } from "@/db/queries/combined-llm-results-queries";
+import { getCombinedLLMResults, getLLMBossResultByUniqueId } from "@/db/queries/combined-llm-results-queries";
 import {
   Table,
   TableBody,
@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PhaseDetails } from "@/components/ui/data-display/phase-details";
+import { StatusDot } from "@/components/ui/data-display/status-dot";
 
 const formatDate = (date: Date | null) => {
   if (!date) return '-';
@@ -18,73 +18,6 @@ const formatDate = (date: Date | null) => {
     minute: '2-digit',
     hour12: false
   }).format(date);
-};
-
-const StatusDot = ({ value, details, phaseType }: { value: boolean | string | null, details?: string | null, phaseType?: string }) => {
-  let bgColor = "bg-gray-200";
-  
-  // Convert string values to lowercase for case-insensitive comparison
-  const stringValue = typeof value === 'string' ? value.toLowerCase() : value;
-  
-  if (value === true || value === "true" || stringValue === "yes") bgColor = "bg-green-500";
-  else if (value === false || value === "false" || stringValue === "missed") bgColor = "bg-red-500";
-  else if (stringValue === "partial" || stringValue === "warning") bgColor = "bg-yellow-500";
-  else if (stringValue === "notreached") bgColor = "bg-black";
-  else if (value === null) bgColor = "bg-gray-200";
-  
-  const dot = <div className={`w-3 h-3 rounded-full ${bgColor}`} />;
-
-  if (details && phaseType) {
-    return (
-      <PhaseDetails id="1" phaseType={phaseType} details={details}>
-        {dot}
-      </PhaseDetails>
-    );
-  }
-
-  return dot;
-};
-
-const getOverallStatus = (result: any) => {
-  const statuses = [
-    result.authPhaseSmooth,
-    result.selectionPhaseSmooth,
-    result.initiationPhaseSmooth,
-    result.greetStudentScore,
-    result.understandFeelingsScore,
-    result.provideOverviewScore,
-    result.goalReviewScore,
-    result.competencyReviewScore,
-    result.purposeReviewScore,
-    result.keyEventsReflectionScore,
-    result.goalSettingScore,
-    result.closingScore,
-    result.userExperienceIssues
-  ];
-
-  // Check for red status (false, "false", "missed")
-  const hasRed = statuses.some(status => {
-    const stringStatus = typeof status === 'string' ? status.toLowerCase() : status;
-    return status === false || status === "false" || stringStatus === "missed";
-  });
-
-  // Check for yellow status ("partial", "warning")
-  const hasYellow = statuses.some(status => {
-    const stringStatus = typeof status === 'string' ? status.toLowerCase() : status;
-    return stringStatus === "partial" || stringStatus === "warning";
-  });
-
-  if (hasRed) return "false";
-  if (hasYellow) return "warning";
-  
-  // Check if all non-null values are green (true, "true", "yes")
-  const allGreen = statuses.every(status => {
-    if (status === null || status === "notreached") return true;
-    const stringStatus = typeof status === 'string' ? status.toLowerCase() : status;
-    return status === true || status === "true" || stringStatus === "yes";
-  });
-
-  return allGreen ? "true" : null;
 };
 
 const getOverallStatusDetails = (result: any) => {
@@ -110,11 +43,45 @@ Simulation Data Type: ${result.simulationDataType || 'N/A'}
 Public URL: ${result.publicUrl || 'N/A'}`;
 };
 
+const mapSmoothnessToStatus = (smoothnessLevel: string | null) => {
+  if (!smoothnessLevel) return null;
+  
+  console.log('Mapping smoothness level:', smoothnessLevel);
+  
+  switch (smoothnessLevel.toLowerCase()) {
+    case 'completely_smooth':
+    case 'completely smooth':
+      return "true";
+    case 'mostly_smooth':
+    case 'mostly smooth':
+      return "warning";
+    case 'not_smooth':
+    case 'not smooth':
+      return "false";
+    default:
+      console.log('Unknown smoothness level:', smoothnessLevel);
+      return null;
+  }
+};
+
 export default async function EvalsPage() {
   const results = await getCombinedLLMResults();
   
+  // Get smoothness levels for all results
+  const resultsWithSmoothnessLevel = await Promise.all(
+    results.map(async (result) => {
+      if (!result.uniqueId) return { ...result, smoothnessLevel: null };
+      
+      const llmBossResult = await getLLMBossResultByUniqueId(result.uniqueId);
+      return {
+        ...result,
+        smoothnessLevel: llmBossResult?.[0]?.smoothnessLevel || null
+      };
+    })
+  );
+  
   // Sort results by createdAt in descending order (newest first)
-  const sortedResults = [...results].sort((a, b) => {
+  const sortedResults = [...resultsWithSmoothnessLevel].sort((a, b) => {
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return dateB - dateA;
@@ -122,7 +89,7 @@ export default async function EvalsPage() {
 
   // Calculate perfectly smooth rate
   const perfectlySmoothCount = sortedResults.filter(result => 
-    getOverallStatus(result) === "true"
+    result.smoothnessLevel === 'completely_smooth'
   ).length;
   const smoothRate = (perfectlySmoothCount / sortedResults.length) * 100;
   
@@ -145,23 +112,19 @@ export default async function EvalsPage() {
           <TableBody className="group">
             <TableRow className="bg-gray-50">
               <TableCell className="font-medium w-48 min-w-48">Overall Status</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
                 >
                   <div className="absolute inset-0 -m-px bg-gray-50 opacity-0 group-hover/cell:opacity-100 pointer-events-none" />
                   <div className="relative flex justify-center">
-                    <PhaseDetails 
-                      id={result.id.toString()}
-                      phaseType="overall"
+                    <StatusDot 
+                      value={mapSmoothnessToStatus(result.smoothnessLevel)}
                       details={getOverallStatusDetails(result)}
-                    >
-                      <StatusDot 
-                        value={getOverallStatus(result)}
-                        phaseType="overall"
-                      />
-                    </PhaseDetails>
+                      phaseType="overall"
+                      uniqueId={result.uniqueId}
+                    />
                   </div>
                 </TableCell>
               ))}
@@ -169,7 +132,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-orange-50">
               <TableCell className="font-medium w-48 min-w-48">Auth Phase</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -188,7 +151,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-orange-50">
               <TableCell className="font-medium w-48 min-w-48">Selection Phase</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -207,7 +170,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-orange-50">
               <TableCell className="font-medium w-48 min-w-48">Initiation Phase</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -226,7 +189,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Greet Student</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -245,7 +208,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Understand Feelings</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -264,7 +227,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Provide Overview</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -283,7 +246,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Goal Review</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -302,7 +265,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Competency Review</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -321,7 +284,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Purpose Review</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -340,7 +303,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Key Events Reflection</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -359,7 +322,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Goal Setting</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -378,7 +341,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-purple-50">
               <TableCell className="font-medium w-48 min-w-48">Closing</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
@@ -397,7 +360,7 @@ export default async function EvalsPage() {
 
             <TableRow className="bg-orange-50">
               <TableCell className="font-medium w-48 min-w-48">UX Issues</TableCell>
-              {sortedResults.map((result, index) => (
+              {sortedResults.map((result) => (
                 <TableCell 
                   key={result.id} 
                   className="text-center p-1 relative group/cell"
