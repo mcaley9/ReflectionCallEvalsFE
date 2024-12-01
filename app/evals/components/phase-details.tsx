@@ -27,7 +27,7 @@ interface PhaseDetailsProps {
   existingFeedback?: {
     sentiment: 'up' | 'down' | null;
     is_flagged: boolean;
-    override_status: string | null;
+    override_status: "yes" | "partial" | "no" | "notreached" | null;
     comment: string | null;
   };
 }

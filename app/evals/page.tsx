@@ -21,7 +21,7 @@ interface Feedback {
   feedbackType: 'phase' | 'boss';
   sentiment: 'up' | 'down' | null;
   isFlagged: boolean;
-  overrideStatus: string | null;
+  overrideStatus: "yes" | "partial" | "no" | "notreached" | null;
   comment: string | null;
 }
 

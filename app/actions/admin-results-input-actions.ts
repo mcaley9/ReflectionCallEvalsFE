@@ -12,6 +12,7 @@ export interface AdminResultsInput {
   isFlagged: boolean;
   overrideStatus: 'yes' | 'partial' | 'no' | 'notreached' | null;
   comment: string | null;
+  updatedAt: Date;
 }
 
 export async function getAdminResultsInput(uniqueId: string) {
