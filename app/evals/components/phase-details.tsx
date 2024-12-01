@@ -32,6 +32,9 @@ interface PhaseDetailsProps {
   };
 }
 
+// First, let's define a type for the valid status values
+type StatusType = 'yes' | 'partial' | 'no' | 'notreached';
+
 export function PhaseDetails({ 
   id, 
   phaseType, 
@@ -48,7 +51,8 @@ export function PhaseDetails({
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [isFlagged, setIsFlagged] = useState(false);
   const [comment, setComment] = useState('');
-  const [overrideStatus, setOverrideStatus] = useState<'yes' | 'partial' | 'no' | 'notreached' | null>(null);
+  // Update the type of overrideStatus to match the RadioGroup values
+  const [overrideStatus, setOverrideStatus] = useState<StatusType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isControlled = controlledOpen !== undefined;
@@ -60,7 +64,13 @@ export function PhaseDetails({
     if (open && existingFeedback) {
       setFeedback(existingFeedback.sentiment);
       setIsFlagged(existingFeedback.is_flagged);
-      setOverrideStatus(existingFeedback.override_status);
+      // Cast the override_status to StatusType if it matches one of the valid values
+      if (existingFeedback.override_status && 
+          ['yes', 'partial', 'no', 'notreached'].includes(existingFeedback.override_status)) {
+        setOverrideStatus(existingFeedback.override_status as StatusType);
+      } else {
+        setOverrideStatus(null);
+      }
       setComment(existingFeedback.comment || '');
     }
   }, [open, existingFeedback]);
@@ -73,6 +83,13 @@ export function PhaseDetails({
 
   const formatDetails = (details: string | null) => {
     if (!details) return 'No details available';
+    
+    if (phaseType === 'session') {
+      const sessionDetails = typeof details === 'string' ? JSON.parse(details) : details;
+      return Object.entries(sessionDetails)
+        .map(([key, value]) => `${key}: ${value || 'N/A'}`)
+        .join('\n');
+    }
     
     try {
       const parsed = typeof details === 'string' ? JSON.parse(details) : details;
@@ -116,6 +133,15 @@ export function PhaseDetails({
     }
   };
 
+  // Add a handler for RadioGroup value changes
+  const handleStatusChange = (value: string) => {
+    if (value === '') {
+      setOverrideStatus(null);
+    } else if (['yes', 'partial', 'no', 'notreached'].includes(value)) {
+      setOverrideStatus(value as StatusType);
+    }
+  };
+
   return (
     <>
       {children && (
@@ -128,7 +154,8 @@ export function PhaseDetails({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {phaseType.charAt(0).toUpperCase() + phaseType.slice(1)} Details
+              {phaseType === 'session' ? 'Session Details' : 
+                `${phaseType.charAt(0).toUpperCase() + phaseType.slice(1)} Details`}
             </DialogTitle>
           </DialogHeader>
           
@@ -138,84 +165,89 @@ export function PhaseDetails({
             </pre>
           </div>
 
-          {/* Status Override Section */}
-          <div className="mt-6 space-y-2 border-t pt-4">
-            <h3 className="font-semibold text-sm">Status</h3>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>AI Status:</span>
-              <span className="font-medium">{currentStatus}</span>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm">Override Status</Label>
-              <RadioGroup
-                value={overrideStatus || ""}
-                onValueChange={setOverrideStatus}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="yes" />
-                  <Label htmlFor="yes">Yes</Label>
+          {/* Only show feedback section for non-session details */}
+          {phaseType !== 'session' && (
+            <>
+              {/* Status Override Section */}
+              <div className="mt-6 space-y-2 border-t pt-4">
+                <h3 className="font-semibold text-sm">Status</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>AI Status:</span>
+                  <span className="font-medium">{currentStatus}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="partial" id="partial" />
-                  <Label htmlFor="partial">Partial</Label>
+                <div className="space-y-2">
+                  <Label className="text-sm">Override Status</Label>
+                  <RadioGroup
+                    value={overrideStatus || ""}
+                    onValueChange={handleStatusChange}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="yes" />
+                      <Label htmlFor="yes">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="partial" id="partial" />
+                      <Label htmlFor="partial">Partial</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="no" />
+                      <Label htmlFor="no">No</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="notreached" id="notreached" />
+                      <Label htmlFor="notreached">Not Reached</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="no" />
-                  <Label htmlFor="no">No</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="notreached" id="notreached" />
-                  <Label htmlFor="notreached">Not Reached</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </div>
+              </div>
 
-          {/* Feedback Section */}
-          <div className="mt-6 space-y-4">
-            <div className="flex gap-4 items-center">
-              <Button
-                variant={feedback === 'up' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
-              >
-                <ThumbsUp className="w-4 h-4 mr-1" />
-                Good
-              </Button>
-              <Button
-                variant={feedback === 'down' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
-              >
-                <ThumbsDown className="w-4 h-4 mr-1" />
-                Bad
-              </Button>
-              <Button
-                variant={isFlagged ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setIsFlagged(!isFlagged)}
-              >
-                <Flag className="w-4 h-4 mr-1" />
-                Flag
-              </Button>
-            </div>
+              {/* Feedback Section */}
+              <div className="mt-6 space-y-4">
+                <div className="flex gap-4 items-center">
+                  <Button
+                    variant={feedback === 'up' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
+                  >
+                    <ThumbsUp className="w-4 h-4 mr-1" />
+                    Good
+                  </Button>
+                  <Button
+                    variant={feedback === 'down' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
+                  >
+                    <ThumbsDown className="w-4 h-4 mr-1" />
+                    Bad
+                  </Button>
+                  <Button
+                    variant={isFlagged ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setIsFlagged(!isFlagged)}
+                  >
+                    <Flag className="w-4 h-4 mr-1" />
+                    Flag
+                  </Button>
+                </div>
 
-            <Textarea
-              placeholder="Add your comments here..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[100px]"
-            />
+                <Textarea
+                  placeholder="Add your comments here..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="min-h-[100px]"
+                />
 
-            <Button 
-              className="w-full"
-              onClick={handleSubmitFeedback}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Feedback"}
-            </Button>
-          </div>
+                <Button 
+                  className="w-full"
+                  onClick={handleSubmitFeedback}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Feedback"}
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>

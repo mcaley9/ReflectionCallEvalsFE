@@ -1,3 +1,5 @@
+import { FileText } from 'lucide-react';
+
 export const ROW_CONFIGS = [
   {
     label: "Perfectly Smooth",
@@ -95,5 +97,26 @@ export const ROW_CONFIGS = [
     getDetails: (result: any) => result.userExperienceIssues,
     phaseType: "UX issues",
     bgColor: "bg-orange-50"
+  },
+  {
+    label: "Session Info",
+    phaseType: "session",
+    getValue: (result: any) => "",
+    getDetails: (result: any) => ({
+      userId: result.userId,
+      fronteggId: result.fronteggId,
+      clientId: result.clientId,
+      tenantId: result.tenantId,
+      assignmentId: result.assignmentId,
+      plGroupId: result.plGroupId,
+      scheduleId: result.scheduleId,
+      activityType: result.activityType,
+      experienceType: result.experienceType,
+      simulationDataType: result.simulationDataType,
+      publicUrl: result.publicUrl,
+      recordingDurationSeconds: result.recordingDurationSeconds
+    }),
+    icon: FileText,
+    bgColor: "bg-gray-100"
   }
 ]; 
