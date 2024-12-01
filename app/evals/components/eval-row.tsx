@@ -40,27 +40,27 @@ export function EvalRow({
         >
           <div className="absolute inset-0 -m-px bg-gray-50 opacity-0 group-hover/cell:opacity-100 pointer-events-none" />
           <div className="relative flex justify-center">
-            <PhaseDetails
-              id={data.id}
-              phaseType={phaseType}
-              details={data.details || null}
-              currentStatus={data.value}
-              uniqueId={data.uniqueId || ''}
-              existingFeedback={data.existingFeedback}
-            >
-              {phaseType === 'session' ? (
+            {phaseType === 'session' ? (
+              <PhaseDetails
+                id={data.id}
+                phaseType={phaseType}
+                details={data.details || null}
+                currentStatus={data.value}
+                uniqueId={data.uniqueId || ''}
+                existingFeedback={data.existingFeedback}
+              >
                 <FileText className="w-5 h-5 text-gray-500 hover:text-gray-700 cursor-pointer" />
-              ) : (
-                <StatusDot 
-                  value={data.value}
-                  details={data.details}
-                  phaseType={phaseType}
-                  uniqueId={data.uniqueId}
-                  overrideStatus={data.overrideStatus}
-                  existingFeedback={data.existingFeedback}
-                />
-              )}
-            </PhaseDetails>
+              </PhaseDetails>
+            ) : (
+              <StatusDot 
+                value={data.value}
+                details={data.details}
+                phaseType={phaseType}
+                uniqueId={data.uniqueId}
+                overrideStatus={data.overrideStatus}
+                existingFeedback={data.existingFeedback}
+              />
+            )}
           </div>
         </TableCell>
       ))}
