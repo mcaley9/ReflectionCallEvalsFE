@@ -72,7 +72,10 @@ export default async function EvalsPage({
     
     // Get all feedback for this phase and sort by updatedAt
     const existingFeedback = phasesMap.get(phaseKey);
-    if (!existingFeedback || feedback.updatedAt > existingFeedback.updatedAt) {
+    const feedbackDate = feedback.updatedAt || new Date(0);
+    const existingDate = existingFeedback?.updatedAt || new Date(0);
+    
+    if (!existingFeedback || feedbackDate > existingDate) {
       phasesMap.set(phaseKey, feedback);
     }
   });

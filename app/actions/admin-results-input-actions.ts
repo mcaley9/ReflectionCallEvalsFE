@@ -12,7 +12,7 @@ export interface AdminResultsInput {
   isFlagged: boolean;
   overrideStatus: 'yes' | 'partial' | 'no' | 'notreached' | null;
   comment: string | null;
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 export async function getAdminResultsInput(uniqueId: string) {
@@ -60,7 +60,8 @@ export async function submitAdminResultsInput(
       overrideStatus: inputData.overrideStatus,
       comment: inputData.comment,
       createdBy: userId,
-      updatedBy: userId
+      updatedBy: userId,
+      updatedAt: new Date()
     });
 
     return { success: true };
