@@ -4,6 +4,7 @@ import { Table, TableBody } from "@/components/ui/table";
 import { EvalRow } from "./components/eval-row";
 import { ROW_CONFIGS } from "./constants";
 import { mapSmoothnessToStatus, getOverallStatusDetails } from "./utils";
+import { submitAdminResultsInput } from "@/actions/admin-results-input-actions";
 
 // Add metadata for the page
 export const metadata: Metadata = {
@@ -13,6 +14,20 @@ export const metadata: Metadata = {
 
 // Add revalidation period
 export const revalidate = 60; // Revalidate the page every 60 seconds
+
+interface Feedback {
+  phase_type: string | null;
+  feedback_type: 'phase' | 'boss';
+  sentiment: 'up' | 'down' | null;
+  is_flagged: boolean;
+  override_status: string | null;
+  comment: string | null;
+}
+
+// Update the type guard function
+function isNonNullString(value: string | null): value is string {
+  return typeof value === 'string' && value !== null;
+}
 
 export default async function EvalsPage({
   searchParams,
@@ -28,7 +43,25 @@ export default async function EvalsPage({
     throw new Error("Failed to load evaluation results. Please try again later.");
   }
 
-  // Calculate perfectly smooth rate
+  // Filter out results with null uniqueIds before fetching feedback
+  const validResults = results.filter((result): result is typeof result & { uniqueId: string } => 
+    isNonNullString(result.uniqueId)
+  );
+  
+  // Now TypeScript knows uniqueId is definitely a string
+  // Initialize an empty feedbackResults array since getFeedback is commented out
+  const feedbackResults: Feedback[][] = [];
+  
+  // Create a map of feedback by uniqueId and phase
+  const feedbackMap = new Map<string, Feedback[]>();
+  feedbackResults.forEach((feedbacks: Feedback[], index: number) => {
+    const uniqueId = validResults[index].uniqueId;
+    if (uniqueId) {  // TypeScript guard
+      feedbackMap.set(uniqueId, feedbacks);
+    }
+  });
+
+  // Calculate perfectly smooth rate for metric card
   const perfectlySmoothCount = results.filter(result => 
     result.smoothnessLevel === 'completely_smooth'
   ).length;
@@ -45,11 +78,21 @@ export default async function EvalsPage({
         ? getOverallStatusDetails(result)
         : config.getDetails?.(result);
 
+      // Only try to get feedback if uniqueId is not null
+      const feedback = result.uniqueId 
+        ? feedbackMap.get(result.uniqueId)?.find((f: Feedback) => 
+            f.phase_type === config.phaseType || 
+            (config.phaseType === 'overall' && f.feedback_type === 'boss')
+          )
+        : null;
+
       return {
         id: result.id,
         uniqueId: result.uniqueId,
         value,
-        details
+        details,
+        overrideStatus: feedback?.override_status ?? null,
+        existingFeedback: feedback ?? null
       };
     });
 

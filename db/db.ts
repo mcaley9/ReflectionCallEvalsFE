@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { profilesTable } from "./schema";
+import { profilesTable, adminResultsInputTable } from "./schema";
 import { combinedLLMResults } from "./schema/combined-llm-results-schema";
 import { llmBossResults } from "./schema/llm-boss-results-schema";
 
@@ -17,6 +17,7 @@ export const db = drizzle(client, {
   schema: {
     profiles: profilesTable,
     combinedLLMResults,
-    llmBossResults
+    llmBossResults,
+    adminResultsInput: adminResultsInputTable
   }
 });

@@ -1,4 +1,4 @@
-import { getProfileByUserIdAction } from "@/actions/profiles-actions";
+import { getProfileByUserIdAction } from "@/app/actions/profiles-actions";
 import Header from "@/components/header";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/utilities/providers";

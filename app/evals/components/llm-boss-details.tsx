@@ -6,10 +6,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ThumbsUp, ThumbsDown, Flag } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
+import { submitFeedback } from "@/app/actions/feedback-actions";
+import { useToast } from "@/components/ui/use-toast";
 
 interface LLMBossDetailsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  currentStatus: string;
+  uniqueId: string;
+  existingFeedback?: {
+    sentiment: 'up' | 'down' | null;
+    is_flagged: boolean;
+    override_status: string | null;
+    comment: string | null;
+  };
   data: {
     smoothnessLevel: string | null;
     technicalScore: number | null;
@@ -30,7 +46,31 @@ interface LLMBossDetailsProps {
   };
 }
 
-export function LLMBossDetails({ open, onOpenChange, data }: LLMBossDetailsProps) {
+export function LLMBossDetails({ 
+  open, 
+  onOpenChange, 
+  data, 
+  currentStatus,
+  uniqueId,
+  existingFeedback 
+}: LLMBossDetailsProps) {
+  const { toast } = useToast();
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [isFlagged, setIsFlagged] = useState(false);
+  const [comment, setComment] = useState('');
+  const [overrideStatus, setOverrideStatus] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load existing feedback when dialog opens
+  useEffect(() => {
+    if (open && existingFeedback) {
+      setFeedback(existingFeedback.sentiment);
+      setIsFlagged(existingFeedback.is_flagged);
+      setOverrideStatus(existingFeedback.override_status);
+      setComment(existingFeedback.comment || '');
+    }
+  }, [open, existingFeedback]);
+
   const formatDate = (date: Date | null) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleString();
@@ -42,6 +82,38 @@ export function LLMBossDetails({ open, onOpenChange, data }: LLMBossDetailsProps
       return JSON.stringify(data, null, 2);
     } catch (e) {
       return data;
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    try {
+      setIsSubmitting(true);
+      await submitFeedback({
+        uniqueId,
+        phaseType: null, // null for boss feedback
+        feedbackType: 'boss',
+        sentiment: feedback,
+        isFlagged,
+        overrideStatus,
+        comment: comment || null
+      });
+
+      toast({
+        title: "Feedback submitted",
+        description: "Your feedback has been saved successfully.",
+      });
+
+      // Close the dialog
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,6 +210,83 @@ export function LLMBossDetails({ open, onOpenChange, data }: LLMBossDetailsProps
               <p><span className="font-medium">Created At:</span> {formatDate(data.createdAt)}</p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 space-y-2 border-t pt-4">
+          <h3 className="font-semibold text-sm">Status</h3>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>AI Status:</span>
+            <span className="font-medium">{currentStatus}</span>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm">Override Status</Label>
+            <RadioGroup
+              value={overrideStatus || ""}
+              onValueChange={setOverrideStatus}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="yes" id="boss-yes" />
+                <Label htmlFor="boss-yes">Yes</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="partial" id="boss-partial" />
+                <Label htmlFor="boss-partial">Partial</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="no" id="boss-no" />
+                <Label htmlFor="boss-no">No</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="notreached" id="boss-notreached" />
+                <Label htmlFor="boss-notreached">Not Reached</Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-4 border-t pt-4">
+          <div className="flex gap-4 items-center">
+            <Button
+              variant={feedback === 'up' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
+            >
+              <ThumbsUp className="w-4 h-4 mr-1" />
+              Good
+            </Button>
+            <Button
+              variant={feedback === 'down' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
+            >
+              <ThumbsDown className="w-4 h-4 mr-1" />
+              Bad
+            </Button>
+            <Button
+              variant={isFlagged ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIsFlagged(!isFlagged)}
+            >
+              <Flag className="w-4 h-4 mr-1" />
+              Flag
+            </Button>
+          </div>
+
+          <Textarea
+            placeholder="Add your comments here..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="min-h-[100px]"
+          />
+
+          <Button 
+            className="w-full"
+            onClick={handleSubmitFeedback}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : "Submit Feedback"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
