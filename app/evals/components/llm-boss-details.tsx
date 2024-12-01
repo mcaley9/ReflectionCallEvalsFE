@@ -23,7 +23,7 @@ interface LLMBossDetailsProps {
   existingFeedback?: {
     sentiment: 'up' | 'down' | null;
     is_flagged: boolean;
-    override_status: string | null;
+    override_status: "yes" | "partial" | "no" | "notreached" | null;
     comment: string | null;
   };
   data: {
@@ -58,7 +58,7 @@ export function LLMBossDetails({
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [isFlagged, setIsFlagged] = useState(false);
   const [comment, setComment] = useState('');
-  const [overrideStatus, setOverrideStatus] = useState<string | null>(null);
+  const [overrideStatus, setOverrideStatus] = useState<"yes" | "partial" | "no" | "notreached" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load existing feedback when dialog opens
@@ -66,7 +66,13 @@ export function LLMBossDetails({
     if (open && existingFeedback) {
       setFeedback(existingFeedback.sentiment);
       setIsFlagged(existingFeedback.is_flagged);
-      setOverrideStatus(existingFeedback.override_status);
+      if (existingFeedback.override_status === "yes" || 
+          existingFeedback.override_status === "partial" || 
+          existingFeedback.override_status === "no" || 
+          existingFeedback.override_status === "notreached" || 
+          existingFeedback.override_status === null) {
+        setOverrideStatus(existingFeedback.override_status);
+      }
       setComment(existingFeedback.comment || '');
     }
   }, [open, existingFeedback]);
@@ -221,8 +227,8 @@ export function LLMBossDetails({
           <div className="space-y-2">
             <Label className="text-sm">Override Status</Label>
             <RadioGroup
-              value={overrideStatus || ""}
-              onValueChange={setOverrideStatus}
+              value={overrideStatus ?? ""}
+              onValueChange={(value: "yes" | "partial" | "no" | "notreached") => setOverrideStatus(value)}
               className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
