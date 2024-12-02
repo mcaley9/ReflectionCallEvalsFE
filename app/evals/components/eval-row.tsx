@@ -9,6 +9,7 @@ interface ResultData {
   value: any;
   details?: string;
   overrideStatus?: string | null;
+  publicUrl?: string;
   existingFeedback?: {
     sentiment: 'up' | 'down' | null;
     is_flagged: boolean;
@@ -59,6 +60,7 @@ export function EvalRow({
                 uniqueId={data.uniqueId}
                 overrideStatus={data.overrideStatus}
                 existingFeedback={data.existingFeedback}
+                publicUrl={data.publicUrl}
               />
             )}
           </div>

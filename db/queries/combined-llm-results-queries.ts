@@ -86,7 +86,8 @@ export async function getCombinedLLMResultsWithSmoothnessLevels(page = 1, limit 
         createdAt: combinedLLMResults.createdAt,
         hasVisionData: combinedLLMResults.hasVisionData,
         hasTranscriptData: combinedLLMResults.hasTranscriptData,
-        smoothnessLevel: llmBossResults.smoothnessLevel
+        smoothnessLevel: llmBossResults.smoothnessLevel,
+        posthogVisionAiAnalysis: combinedLLMResults.posthogVisionAiAnalysis
       })
       .from(combinedLLMResults)
       .leftJoin(

@@ -24,6 +24,7 @@ interface PhaseDetailsProps {
   onOpenChange?: (open: boolean) => void;
   currentStatus: string;
   uniqueId: string;
+  publicUrl?: string;
   existingFeedback?: {
     sentiment: 'up' | 'down' | null;
     is_flagged: boolean;
@@ -44,6 +45,7 @@ export function PhaseDetails({
   onOpenChange: controlledOnOpenChange,
   currentStatus,
   uniqueId,
+  publicUrl: propPublicUrl,
   existingFeedback
 }: PhaseDetailsProps) {
   const { toast } = useToast();
@@ -82,22 +84,57 @@ export function PhaseDetails({
   };
 
   const formatDetails = (details: string | null) => {
-    if (!details) return 'No details available';
-    
-    if (phaseType === 'session') {
-      const sessionDetails = typeof details === 'string' ? JSON.parse(details) : details;
-      return Object.entries(sessionDetails)
-        .map(([key, value]) => `${key}: ${value || 'N/A'}`)
-        .join('\n');
-    }
+    if (!details) return { formattedText: 'No details available', publicUrl: null };
     
     try {
       const parsed = typeof details === 'string' ? JSON.parse(details) : details;
-      return JSON.stringify(parsed, null, 2);
+      const parsedPublicUrl = parsed.publicUrl || null;
+      
+      // Create a copy of parsed without the publicUrl
+      const { publicUrl, ...parsedWithoutUrl } = parsed;
+      
+      if (phaseType === 'session') {
+        // Format regular session details
+        const regularDetails = Object.entries(parsedWithoutUrl)
+          .filter(([key]) => key !== 'timeline')
+          .map(([key, value]) => `${key}: ${value || 'N/A'}`)
+          .join('\n');
+        
+        // Format timeline if it exists
+        const timeline = parsedWithoutUrl.timeline;
+        
+        let formattedText = regularDetails;
+        if (timeline) {
+          const formattedTimeline = typeof timeline === 'string' ? timeline : JSON.stringify(timeline, null, 2);
+          formattedText = `${regularDetails}\n\nTimeline:\n${formattedTimeline}`;
+        }
+        
+        return {
+          formattedText,
+          publicUrl: parsedPublicUrl
+        };
+      }
+      
+      return {
+        formattedText: JSON.stringify(parsedWithoutUrl, null, 2),
+        publicUrl: parsedPublicUrl
+      };
     } catch (e) {
-      return details;
+      return {
+        formattedText: details,
+        publicUrl: null
+      };
     }
   };
+
+  // Update how we handle the formatted result
+  const formattedResult = formatDetails(details);
+  const detailsText = formattedResult.formattedText;
+  const detailsPublicUrl = formattedResult.publicUrl;
+
+  console.log('Details:', details);
+  console.log('Formatted Result:', formattedResult);
+  console.log('Public URL:', detailsPublicUrl);
 
   const handleSubmitFeedback = async () => {
     try {
@@ -142,6 +179,9 @@ export function PhaseDetails({
     }
   };
 
+  // Use either the prop URL or the one from details
+  const finalPublicUrl = propPublicUrl || detailsPublicUrl;
+
   return (
     <>
       {children && (
@@ -161,9 +201,23 @@ export function PhaseDetails({
           
           <div className="mt-4">
             <pre className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-[400px] text-sm whitespace-pre-wrap">
-              {formatDetails(details)}
+              {detailsText}
             </pre>
           </div>
+
+          {/* Add PostHog URL if available */}
+          {finalPublicUrl && (
+            <div className="mt-2">
+              <a 
+                href={finalPublicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline text-sm"
+              >
+                View in PostHog
+              </a>
+            </div>
+          )}
 
           {/* Only show feedback section for non-session details */}
           {phaseType !== 'session' && (
@@ -184,19 +238,19 @@ export function PhaseDetails({
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="yes" id="yes" />
-                      <Label htmlFor="yes">Yes</Label>
+                      <Label htmlFor="yes" className="text-green-600 font-medium">Green</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="partial" id="partial" />
-                      <Label htmlFor="partial">Partial</Label>
+                      <Label htmlFor="partial" className="text-yellow-600 font-medium">Yellow</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="no" />
-                      <Label htmlFor="no">No</Label>
+                      <Label htmlFor="no" className="text-red-600 font-medium">Red</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="notreached" id="notreached" />
-                      <Label htmlFor="notreached">Not Reached</Label>
+                      <Label htmlFor="notreached" className="text-gray-400 font-medium">Grey</Label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -211,7 +265,7 @@ export function PhaseDetails({
                     onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
                   >
                     <ThumbsUp className="w-4 h-4 mr-1" />
-                    Good
+                    AI Got It Right
                   </Button>
                   <Button
                     variant={feedback === 'down' ? 'default' : 'outline'}
@@ -219,7 +273,7 @@ export function PhaseDetails({
                     onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
                   >
                     <ThumbsDown className="w-4 h-4 mr-1" />
-                    Bad
+                    AI Got It Wrong
                   </Button>
                   <Button
                     variant={isFlagged ? 'default' : 'outline'}
@@ -243,7 +297,7 @@ export function PhaseDetails({
                   onClick={handleSubmitFeedback}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Submitting..." : "Submit Feedback"}
+                  {isSubmitting ? "Saving..." : "Save"}
                 </Button>
               </div>
             </>

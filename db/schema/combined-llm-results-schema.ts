@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, jsonb } from "drizzle-orm/pg-core";
 
 export const combinedLLMResults = pgTable("combined_llm_results", {
   id: text("id").primaryKey(),
@@ -48,5 +48,6 @@ export const combinedLLMResults = pgTable("combined_llm_results", {
   publicUrl: text("public_url"),
   createdAt: timestamp("created_at"),
   hasVisionData: text("has_vision_data"),
-  hasTranscriptData: text("has_transcript_data")
+  hasTranscriptData: text("has_transcript_data"),
+  posthogVisionAiAnalysis: jsonb("posthog_vision_ai_analysis")
 }); 

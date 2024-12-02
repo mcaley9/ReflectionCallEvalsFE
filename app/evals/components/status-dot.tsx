@@ -11,6 +11,7 @@ type StatusDotProps = {
   phaseType?: string;
   uniqueId?: string | null;
   overrideStatus?: string | null;
+  publicUrl?: string;
   existingFeedback?: {
     sentiment: 'up' | 'down' | null;
     is_flagged: boolean;
@@ -25,6 +26,7 @@ export function StatusDot({
   phaseType, 
   uniqueId, 
   overrideStatus,
+  publicUrl,
   existingFeedback 
 }: StatusDotProps) {
   const [showLLMBossDetails, setShowLLMBossDetails] = useState(false);
@@ -98,14 +100,15 @@ export function StatusDot({
       {/* Show Phase Details for other phases */}
       {details && phaseType && uniqueId && (
         <PhaseDetails
-          id="1"
+          id={uniqueId || ''}
           phaseType={phaseType}
-          details={details}
+          details={details || null}
           open={showPhaseDetails}
           onOpenChange={setShowPhaseDetails}
           currentStatus={value as string}
-          uniqueId={uniqueId}
+          uniqueId={uniqueId || ''}
           existingFeedback={existingFeedback}
+          publicUrl={publicUrl}
         >
           {null}
         </PhaseDetails>

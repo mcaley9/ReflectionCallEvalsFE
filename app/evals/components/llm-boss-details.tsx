@@ -131,90 +131,18 @@ export function LLMBossDetails({
         </DialogHeader>
         
         <div className="mt-4 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-semibold mb-2">Scores</h3>
-              <div className="space-y-2">
-                <p><span className="font-medium">Technical Score:</span> {data.technicalScore ?? 'N/A'}</p>
-                <p><span className="font-medium">Conversation Score:</span> {data.conversationScore ?? 'N/A'}</p>
-                <p><span className="font-medium">Overall Score:</span> {data.overallScore ?? 'N/A'}</p>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Status</h3>
-              <div className="space-y-2">
-                <p><span className="font-medium">Smoothness Level:</span> {data.smoothnessLevel ?? 'N/A'}</p>
-                <p><span className="font-medium">Confidence Level:</span> {data.confidenceLevel ?? 'N/A'}</p>
-                <p><span className="font-medium">Status:</span> {data.status ?? 'N/A'}</p>
-              </div>
+          <div>
+            <h3 className="font-semibold mb-2">Status</h3>
+            <div className="space-y-2">
+              <p><span className="font-medium">Smoothness Level:</span> {data.smoothnessLevel ?? 'N/A'}</p>
+              <p><span className="font-medium">Confidence Level:</span> {data.confidenceLevel ?? 'N/A'}</p>
+              <p><span className="font-medium">Status:</span> {data.status ?? 'N/A'}</p>
             </div>
           </div>
 
           <div>
             <h3 className="font-semibold mb-2">Assessment Summary</h3>
             <p className="text-sm whitespace-pre-wrap">{data.assessmentSummary ?? 'N/A'}</p>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Technical Analysis</h3>
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-1">Highlights</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.technicalHighlights)}
-                </pre>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium mb-1">Issues</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.technicalIssues)}
-                </pre>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium mb-1">Recommendations</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.technicalRecommendations)}
-                </pre>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Conversation Analysis</h3>
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-1">Highlights</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.conversationHighlights)}
-                </pre>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium mb-1">Issues</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.conversationIssues)}
-                </pre>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium mb-1">Recommendations</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.conversationalRecommendations)}
-                </pre>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-2">Additional Information</h3>
-            <div className="space-y-2">
-              <div>
-                <h4 className="text-sm font-medium mb-1">Key Factors</h4>
-                <pre className="text-sm bg-gray-50 p-3 rounded-md overflow-x-auto">
-                  {formatJsonb(data.keyFactors)}
-                </pre>
-              </div>
-              <p><span className="font-medium">Improvement Priority:</span> {data.improvementPriority ?? 'N/A'}</p>
-              <p><span className="font-medium">Created At:</span> {formatDate(data.createdAt)}</p>
-            </div>
           </div>
         </div>
 
@@ -233,19 +161,19 @@ export function LLMBossDetails({
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="yes" id="boss-yes" />
-                <Label htmlFor="boss-yes">Yes</Label>
+                <Label htmlFor="boss-yes" className="text-green-600 font-medium">Green</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="partial" id="boss-partial" />
-                <Label htmlFor="boss-partial">Partial</Label>
+                <Label htmlFor="boss-partial" className="text-yellow-600 font-medium">Yellow</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="no" id="boss-no" />
-                <Label htmlFor="boss-no">No</Label>
+                <Label htmlFor="boss-no" className="text-red-600 font-medium">Red</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="notreached" id="boss-notreached" />
-                <Label htmlFor="boss-notreached">Not Reached</Label>
+                <Label htmlFor="boss-notreached" className="text-gray-400 font-medium">Grey</Label>
               </div>
             </RadioGroup>
           </div>
@@ -259,7 +187,7 @@ export function LLMBossDetails({
               onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
             >
               <ThumbsUp className="w-4 h-4 mr-1" />
-              Good
+              AI Got It Right
             </Button>
             <Button
               variant={feedback === 'down' ? 'default' : 'outline'}
@@ -267,7 +195,7 @@ export function LLMBossDetails({
               onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
             >
               <ThumbsDown className="w-4 h-4 mr-1" />
-              Bad
+              AI Got It Wrong
             </Button>
             <Button
               variant={isFlagged ? 'default' : 'outline'}
@@ -291,7 +219,7 @@ export function LLMBossDetails({
             onClick={handleSubmitFeedback}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Submitting..." : "Submit Feedback"}
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </div>
       </DialogContent>
