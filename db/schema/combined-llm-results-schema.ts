@@ -13,6 +13,8 @@ export const combinedLLMResults = pgTable("combined_llm_results", {
   selectionPhaseDetails: text("selection_phase_details"),
   initiationPhaseSmooth: boolean("initiation_phase_smooth"),
   initiationPhaseDetails: text("initiation_phase_details"),
+  reportReviewPhaseSmooth: boolean("report_review_phase_smooth"),
+  reportReviewPhaseDetails: text("report_review_phase_details"),
   totalDurationSeconds: text("total_duration_seconds"),
   userExperienceIssues: text("user_experience_issues"),
   evaluationId: text("evaluation_id"),

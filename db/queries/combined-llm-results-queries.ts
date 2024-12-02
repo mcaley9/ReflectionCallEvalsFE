@@ -50,6 +50,8 @@ export async function getCombinedLLMResultsWithSmoothnessLevels(page = 1, limit 
         selectionPhaseDetails: combinedLLMResults.selectionPhaseDetails,
         initiationPhaseSmooth: combinedLLMResults.initiationPhaseSmooth,
         initiationPhaseDetails: combinedLLMResults.initiationPhaseDetails,
+        reportReviewPhaseSmooth: combinedLLMResults.reportReviewPhaseSmooth,
+        reportReviewPhaseDetails: combinedLLMResults.reportReviewPhaseDetails,
         totalDurationSeconds: combinedLLMResults.totalDurationSeconds,
         userExperienceIssues: combinedLLMResults.userExperienceIssues,
         evaluationId: combinedLLMResults.evaluationId,

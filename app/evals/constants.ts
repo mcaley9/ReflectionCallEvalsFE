@@ -165,9 +165,9 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Post-Call Report Review",
-    getValue: (result: any) => result.postCallReportReviewScore,
+    getValue: (result: any) => result.reportReviewPhaseSmooth,
     getDetails: (result: any) => {
-      const details = result.postCallReportReviewCriteria;
+      const details = result.reportReviewPhaseDetails;
       return {
         details,
         publicUrl: result.publicUrl
