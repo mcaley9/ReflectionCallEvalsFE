@@ -26,7 +26,7 @@ export function StatusDot({
   phaseType, 
   uniqueId, 
   overrideStatus,
-  publicUrl,
+  publicUrl: propPublicUrl,
   existingFeedback 
 }: StatusDotProps) {
   const [showLLMBossDetails, setShowLLMBossDetails] = useState(false);
@@ -81,6 +81,20 @@ export function StatusDot({
     />
   );
 
+  // Parse the details to extract the publicUrl if it exists
+  let parsedPublicUrl = null;
+  try {
+    if (details) {
+      const parsedDetails = JSON.parse(details);
+      parsedPublicUrl = parsedDetails.publicUrl || null;
+    }
+  } catch (e) {
+    console.error('Error parsing details:', e);
+  }
+
+  // Use prop URL if available, otherwise use parsed URL
+  const finalPublicUrl = propPublicUrl || parsedPublicUrl;
+
   return (
     <>
       {dot}
@@ -108,7 +122,7 @@ export function StatusDot({
           currentStatus={value as string}
           uniqueId={uniqueId || ''}
           existingFeedback={existingFeedback}
-          publicUrl={publicUrl}
+          publicUrl={finalPublicUrl}
         >
           {null}
         </PhaseDetails>

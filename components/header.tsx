@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { List, Menu, X } from "lucide-react";
+import { FileText, Menu, X, BookOpen, Phone, Video, Presentation } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -14,32 +14,55 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-primary text-primary-foreground shadow-md">
+    <header className="bg-[#faf7f2] text-gray-800 shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <List className="h-6 w-6" />
-          <div className="text-xl font-bold">Reflection Call Evals</div>
+          <FileText className="h-6 w-6 text-gray-800" />
+          <div className="text-xl font-bold">InStage Evals</div>
         </div>
 
-        <nav className="hidden md:flex space-x-4">
+        <nav className="hidden md:flex items-center ml-auto space-x-4">
           <Link
             href="/"
-            className="hover:underline"
+            className="hover:underline text-sm flex items-center space-x-1"
           >
-            Home
+            <BookOpen className="h-4 w-4" />
+            <span>Home</span>
           </Link>
 
           <SignedIn>
             <Link
               href="/evals"
-              className="hover:underline"
+              className="hover:underline text-sm flex items-center space-x-1"
             >
-              Evals
+              <FileText className="h-4 w-4" />
+              <span>Reflection</span>
+            </Link>
+            <Link
+              href="#"
+              className="hover:underline text-sm flex items-center space-x-1"
+            >
+              <Phone className="h-4 w-4" />
+              <span>Phone Interview</span>
+            </Link>
+            <Link
+              href="#"
+              className="hover:underline text-sm flex items-center space-x-1"
+            >
+              <Video className="h-4 w-4" />
+              <span>Conference</span>
+            </Link>
+            <Link
+              href="#"
+              className="hover:underline text-sm flex items-center space-x-1"
+            >
+              <Presentation className="h-4 w-4" />
+              <span>Demo</span>
             </Link>
           </SignedIn>
         </nav>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 ml-6">
           <SignedOut>
             <SignInButton />
           </SignedOut>
@@ -62,26 +85,58 @@ export default function Header() {
       </div>
 
       {isMenuOpen && (
-        <nav className="md:hidden bg-primary-foreground text-primary p-4">
+        <nav className="md:hidden bg-[#faf7f2] text-gray-800 p-4">
           <div className="space-y-2">
             <div>
               <Link
                 href="/"
-                className="block hover:underline"
+                className="block hover:underline text-sm flex items-center space-x-1"
                 onClick={toggleMenu}
               >
-                Home
+                <BookOpen className="h-4 w-4" />
+                <span>Home</span>
               </Link>
             </div>
 
             <SignedIn>
               <div>
                 <Link
-                  href="/notes"
-                  className="block hover:underline"
+                  href="/evals"
+                  className="block hover:underline text-sm flex items-center space-x-1"
                   onClick={toggleMenu}
                 >
-                  Notes
+                  <FileText className="h-4 w-4" />
+                  <span>Reflection</span>
+                </Link>
+              </div>
+              <div>
+                <Link
+                  href="#"
+                  className="block hover:underline text-sm flex items-center space-x-1"
+                  onClick={toggleMenu}
+                >
+                  <Phone className="h-4 w-4" />
+                  <span>Phone Interview</span>
+                </Link>
+              </div>
+              <div>
+                <Link
+                  href="#"
+                  className="block hover:underline text-sm flex items-center space-x-1"
+                  onClick={toggleMenu}
+                >
+                  <Video className="h-4 w-4" />
+                  <span>Conference</span>
+                </Link>
+              </div>
+              <div>
+                <Link
+                  href="#"
+                  className="block hover:underline text-sm flex items-center space-x-1"
+                  onClick={toggleMenu}
+                >
+                  <Presentation className="h-4 w-4" />
+                  <span>Demo</span>
                 </Link>
               </div>
             </SignedIn>

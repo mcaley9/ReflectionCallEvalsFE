@@ -7,7 +7,7 @@ interface ResultData {
   id: string;
   uniqueId: string | null;
   value: any;
-  details?: string;
+  details?: string | { details: any; publicUrl: any } | null;
   overrideStatus?: string | null;
   publicUrl?: string;
   existingFeedback?: {
@@ -25,6 +25,12 @@ interface EvalRowProps {
   bgColor?: string;
 }
 
+function getDetailsString(details: string | { details: any; publicUrl: any } | null | undefined): { details: string | null, publicUrl: string | undefined } {
+  if (!details) return { details: null, publicUrl: undefined };
+  if (typeof details === 'string') return { details, publicUrl: undefined };
+  return { details: JSON.stringify(details.details), publicUrl: details.publicUrl || undefined };
+}
+
 export function EvalRow({
   label,
   resultData,
@@ -37,7 +43,7 @@ export function EvalRow({
       {resultData.map((data) => (
         <TableCell 
           key={data.id} 
-          className="text-center p-1 relative group/cell"
+          className="text-center p-0.5 relative group/cell"
         >
           <div className="absolute inset-0 -m-px bg-gray-50 opacity-0 group-hover/cell:opacity-100 pointer-events-none" />
           <div className="relative flex justify-center">
@@ -45,22 +51,23 @@ export function EvalRow({
               <PhaseDetails
                 id={data.id}
                 phaseType={phaseType}
-                details={data.details || null}
+                details={getDetailsString(data.details).details}
                 currentStatus={data.value}
                 uniqueId={data.uniqueId || ''}
                 existingFeedback={data.existingFeedback}
+                publicUrl={getDetailsString(data.details).publicUrl}
               >
                 <FileText className="w-5 h-5 text-gray-500 hover:text-gray-700 cursor-pointer" />
               </PhaseDetails>
             ) : (
               <StatusDot 
                 value={data.value}
-                details={data.details}
+                details={getDetailsString(data.details).details}
                 phaseType={phaseType}
                 uniqueId={data.uniqueId}
                 overrideStatus={data.overrideStatus}
                 existingFeedback={data.existingFeedback}
-                publicUrl={data.publicUrl}
+                publicUrl={getDetailsString(data.details).publicUrl}
               />
             )}
           </div>

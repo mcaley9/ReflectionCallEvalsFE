@@ -164,16 +164,16 @@ export const ROW_CONFIGS = [
     bgColor: "bg-purple-50"
   },
   {
-    label: "UX Issues",
-    getValue: (result: any) => result.userExperienceIssues,
+    label: "Post-Call Report Review",
+    getValue: (result: any) => result.postCallReportReviewScore,
     getDetails: (result: any) => {
-      const details = result.userExperienceIssues;
+      const details = result.postCallReportReviewCriteria;
       return {
         details,
         publicUrl: result.publicUrl
       };
     },
-    phaseType: "UX issues",
+    phaseType: "post call report review",
     bgColor: "bg-orange-50"
   },
   {

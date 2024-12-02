@@ -88,11 +88,13 @@ export function PhaseDetails({
     
     try {
       const parsed = typeof details === 'string' ? JSON.parse(details) : details;
+      // Extract publicUrl before any other processing
       const parsedPublicUrl = parsed.publicUrl || null;
       
       // Create a copy of parsed without the publicUrl
       const { publicUrl, ...parsedWithoutUrl } = parsed;
       
+      let formattedText;
       if (phaseType === 'session') {
         // Format regular session details
         const regularDetails = Object.entries(parsedWithoutUrl)
@@ -103,23 +105,22 @@ export function PhaseDetails({
         // Format timeline if it exists
         const timeline = parsedWithoutUrl.timeline;
         
-        let formattedText = regularDetails;
+        formattedText = regularDetails;
         if (timeline) {
           const formattedTimeline = typeof timeline === 'string' ? timeline : JSON.stringify(timeline, null, 2);
           formattedText = `${regularDetails}\n\nTimeline:\n${formattedTimeline}`;
         }
-        
-        return {
-          formattedText,
-          publicUrl: parsedPublicUrl
-        };
+      } else {
+        // For all other phase types
+        formattedText = JSON.stringify(parsedWithoutUrl, null, 2);
       }
       
       return {
-        formattedText: JSON.stringify(parsedWithoutUrl, null, 2),
+        formattedText,
         publicUrl: parsedPublicUrl
       };
     } catch (e) {
+      // If parsing fails, return the original string
       return {
         formattedText: details,
         publicUrl: null
@@ -127,10 +128,12 @@ export function PhaseDetails({
     }
   };
 
-  // Update how we handle the formatted result
   const formattedResult = formatDetails(details);
   const detailsText = formattedResult.formattedText;
   const detailsPublicUrl = formattedResult.publicUrl;
+  
+  // Use either the prop URL or the one from details
+  const finalPublicUrl = propPublicUrl || detailsPublicUrl;
 
   console.log('Details:', details);
   console.log('Formatted Result:', formattedResult);
@@ -179,9 +182,6 @@ export function PhaseDetails({
     }
   };
 
-  // Use either the prop URL or the one from details
-  const finalPublicUrl = propPublicUrl || detailsPublicUrl;
-
   return (
     <>
       {children && (
@@ -205,15 +205,29 @@ export function PhaseDetails({
             </pre>
           </div>
 
-          {/* Add PostHog URL if available */}
+          {/* PostHog URL - now shown for all phase types */}
           {finalPublicUrl && (
-            <div className="mt-2">
+            <div className="mt-2 flex justify-end">
               <a 
                 href={finalPublicUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline text-sm"
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm px-3 py-2 rounded-md bg-blue-50"
               >
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
                 View in PostHog
               </a>
             </div>
