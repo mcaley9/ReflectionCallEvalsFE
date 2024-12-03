@@ -81,12 +81,16 @@ export function StatusDot({
     />
   );
 
-  // Parse the details to extract the publicUrl if it exists
+  // Parse the details to extract the publicUrl and vapiCallId
   let parsedPublicUrl = null;
+  let parsedVapiCallId = null;
   try {
     if (details) {
       const parsedDetails = JSON.parse(details);
+      console.log('StatusDot - Parsed Details:', parsedDetails);
       parsedPublicUrl = parsedDetails.publicUrl || null;
+      parsedVapiCallId = parsedDetails.vapiCallId || null;
+      console.log('StatusDot - Parsed VapiCallId:', parsedVapiCallId);
     }
   } catch (e) {
     console.error('Error parsing details:', e);
@@ -123,6 +127,7 @@ export function StatusDot({
           uniqueId={uniqueId || ''}
           existingFeedback={existingFeedback}
           publicUrl={finalPublicUrl}
+          vapiCallId={parsedVapiCallId}
         >
           {null}
         </PhaseDetails>

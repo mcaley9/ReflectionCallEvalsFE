@@ -10,169 +10,143 @@ export const ROW_CONFIGS = [
   {
     label: "Auth Phase",
     getValue: (result: any) => result.authPhaseSmooth,
-    getDetails: (result: any) => {
-      const details = result.authPhaseDetails;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.authPhaseDetails,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "auth phase",
     bgColor: "bg-orange-50"
   },
   {
     label: "Selection Phase",
     getValue: (result: any) => result.selectionPhaseSmooth,
-    getDetails: (result: any) => {
-      const details = result.selectionPhaseDetails;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.selectionPhaseDetails,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "selection phase",
     bgColor: "bg-orange-50"
   },
   {
     label: "Initiation Phase",
     getValue: (result: any) => result.initiationPhaseSmooth,
-    getDetails: (result: any) => {
-      const details = result.initiationPhaseDetails;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.initiationPhaseDetails,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "initiation phase",
     bgColor: "bg-orange-50"
   },
   {
     label: "Greet Student",
     getValue: (result: any) => result.greetStudentScore,
-    getDetails: (result: any) => {
-      const details = result.greetStudentCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.greetStudentCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "greet student",
     bgColor: "bg-purple-50"
   },
   {
     label: "Understand Feelings",
     getValue: (result: any) => result.understandFeelingsScore,
-    getDetails: (result: any) => {
-      const details = result.understandFeelingsCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.understandFeelingsCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "understand feelings",
     bgColor: "bg-purple-50"
   },
   {
     label: "Provide Overview",
     getValue: (result: any) => result.provideOverviewScore,
-    getDetails: (result: any) => {
-      const details = result.provideOverviewCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.provideOverviewCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "provide overview",
     bgColor: "bg-purple-50"
   },
   {
     label: "Goal Review",
     getValue: (result: any) => result.goalReviewScore,
-    getDetails: (result: any) => {
-      const details = result.goalReviewCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.goalReviewCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "goal review",
     bgColor: "bg-purple-50"
   },
   {
     label: "Competency Review",
     getValue: (result: any) => result.competencyReviewScore,
-    getDetails: (result: any) => {
-      const details = result.competencyReviewCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.competencyReviewCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "competency review",
     bgColor: "bg-purple-50"
   },
   {
     label: "Purpose Review",
     getValue: (result: any) => result.purposeReviewScore,
-    getDetails: (result: any) => {
-      const details = result.purposeReviewCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.purposeReviewCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "purpose review",
     bgColor: "bg-purple-50"
   },
   {
     label: "Key Events Reflection",
     getValue: (result: any) => result.keyEventsReflectionScore,
-    getDetails: (result: any) => {
-      const details = result.keyEventsReflectionCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.keyEventsReflectionCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "key events reflection",
     bgColor: "bg-purple-50"
   },
   {
     label: "Goal Setting",
     getValue: (result: any) => result.goalSettingScore,
-    getDetails: (result: any) => {
-      const details = result.goalSettingCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.goalSettingCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "goal setting",
     bgColor: "bg-purple-50"
   },
   {
     label: "Closing",
     getValue: (result: any) => result.closingScore,
-    getDetails: (result: any) => {
-      const details = result.closingCriteria;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.closingCriteria,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "closing",
     bgColor: "bg-purple-50"
   },
   {
     label: "Post-Call Report Review",
     getValue: (result: any) => result.reportReviewPhaseSmooth,
-    getDetails: (result: any) => {
-      const details = result.reportReviewPhaseDetails;
-      return {
-        details,
-        publicUrl: result.publicUrl
-      };
-    },
+    getDetails: (result: any) => JSON.stringify({
+      ...result.reportReviewPhaseDetails,
+      publicUrl: result.publicUrl,
+      vapiCallId: result.vapiCallId
+    }),
     phaseType: "post call report review",
     bgColor: "bg-orange-50"
   },

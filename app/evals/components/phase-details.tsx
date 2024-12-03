@@ -25,6 +25,7 @@ interface PhaseDetailsProps {
   currentStatus: string;
   uniqueId: string;
   publicUrl?: string;
+  vapiCallId?: string | null;
   existingFeedback?: {
     sentiment: 'up' | 'down' | null;
     is_flagged: boolean;
@@ -46,6 +47,7 @@ export function PhaseDetails({
   currentStatus,
   uniqueId,
   publicUrl: propPublicUrl,
+  vapiCallId: propVapiCallId,
   existingFeedback
 }: PhaseDetailsProps) {
   const { toast } = useToast();
@@ -84,26 +86,27 @@ export function PhaseDetails({
   };
 
   const formatDetails = (details: string | null) => {
-    if (!details) return { formattedText: 'No details available', publicUrl: null };
+    if (!details) return { formattedText: 'No details available', publicUrl: null, vapiCallId: null };
     
     try {
       const parsed = typeof details === 'string' ? JSON.parse(details) : details;
-      // Extract publicUrl before any other processing
-      const parsedPublicUrl = parsed.publicUrl || null;
+      console.log('PhaseDetails - Initial Parsed Data:', parsed);
       
-      // Create a copy of parsed without the publicUrl
-      const { publicUrl, ...parsedWithoutUrl } = parsed;
+      // Extract publicUrl and vapiCallId before any other processing
+      const parsedPublicUrl = parsed.publicUrl || null;
+      const vapiCallId = parsed.vapiCallId || null;
+      console.log('PhaseDetails - Extracted VapiCallId:', vapiCallId);
       
       let formattedText;
       if (phaseType === 'session') {
         // Format regular session details
-        const regularDetails = Object.entries(parsedWithoutUrl)
-          .filter(([key]) => key !== 'timeline')
+        const regularDetails = Object.entries(parsed)
+          .filter(([key]) => key !== 'timeline' && key !== 'publicUrl')
           .map(([key, value]) => `${key}: ${value || 'N/A'}`)
           .join('\n');
         
         // Format timeline if it exists
-        const timeline = parsedWithoutUrl.timeline;
+        const timeline = parsed.timeline;
         
         formattedText = regularDetails;
         if (timeline) {
@@ -112,18 +115,21 @@ export function PhaseDetails({
         }
       } else {
         // For all other phase types
-        formattedText = JSON.stringify(parsedWithoutUrl, null, 2);
+        formattedText = JSON.stringify(parsed, null, 2);
       }
       
       return {
         formattedText,
-        publicUrl: parsedPublicUrl
+        publicUrl: parsedPublicUrl,
+        vapiCallId
       };
     } catch (e) {
+      console.error('PhaseDetails - Error parsing details:', e);
       // If parsing fails, return the original string
       return {
         formattedText: details,
-        publicUrl: null
+        publicUrl: null,
+        vapiCallId: null
       };
     }
   };
@@ -131,9 +137,18 @@ export function PhaseDetails({
   const formattedResult = formatDetails(details);
   const detailsText = formattedResult.formattedText;
   const detailsPublicUrl = formattedResult.publicUrl;
+  const detailsVapiCallId = formattedResult.vapiCallId;
   
-  // Use either the prop URL or the one from details
+  // Use either the prop values or the ones from details
   const finalPublicUrl = propPublicUrl || detailsPublicUrl;
+  const finalVapiCallId = propVapiCallId || detailsVapiCallId;
+
+  console.log('PhaseDetails - Final Values:', {
+    propVapiCallId,
+    detailsVapiCallId,
+    finalVapiCallId,
+    phaseType
+  });
 
   console.log('Details:', details);
   console.log('Formatted Result:', formattedResult);
@@ -205,9 +220,9 @@ export function PhaseDetails({
             </pre>
           </div>
 
-          {/* PostHog URL - now shown for all phase types */}
-          {finalPublicUrl && (
-            <div className="mt-2 flex justify-end">
+          {/* PostHog URL and VapiCall URL */}
+          <div className="mt-2 flex justify-end gap-2">
+            {finalPublicUrl && (
               <a 
                 href={finalPublicUrl}
                 target="_blank"
@@ -230,8 +245,30 @@ export function PhaseDetails({
                 </svg>
                 View in PostHog
               </a>
-            </div>
-          )}
+            )}
+            {finalVapiCallId && (
+              <a 
+                href={`https://dashboard.vapi.ai/calls/${finalVapiCallId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm px-3 py-2 rounded-md bg-blue-50"
+              >
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                View Call
+              </a>
+            )}
+          </div>
 
           {/* Only show feedback section for non-session details */}
           {phaseType !== 'session' && (
