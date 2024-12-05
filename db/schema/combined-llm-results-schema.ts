@@ -4,6 +4,7 @@ export const combinedLLMResults = pgTable("combined_llm_results", {
   id: text("id").primaryKey(),
   sessionId: uuid("session_id"),
   uniqueId: text("unique_id"),
+  clientName: text("client_name"),
   reviewQueueId: text("review_queue_id"),
   posthogId: text("posthog_id"),
   vapiCallId: text("vapi_call_id"),

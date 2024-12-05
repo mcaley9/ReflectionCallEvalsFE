@@ -41,6 +41,7 @@ export async function getCombinedLLMResultsWithSmoothnessLevels(page = 1, limit 
         id: combinedLLMResults.id,
         sessionId: combinedLLMResults.sessionId,
         uniqueId: combinedLLMResults.uniqueId,
+        clientName: combinedLLMResults.clientName,
         reviewQueueId: combinedLLMResults.reviewQueueId,
         posthogId: combinedLLMResults.posthogId,
         vapiCallId: combinedLLMResults.vapiCallId,

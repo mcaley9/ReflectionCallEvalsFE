@@ -1,73 +1,63 @@
-CREATE TYPE review_status_type AS ENUM (
-    'Pending',   -- Default state when record is created
-    'Ready',     -- Ready for review
-    'Processing', -- Currently being processed
-    'Skipped',   -- Decided to skip this review
-    'Error',     -- Something went wrong during processing
-    'Completed'  -- Review has been completed
-);
-
-CREATE TABLE IF NOT EXISTS "PostHog_Recordings_Review_Queue" (
-    "id" UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
-    "PostHog_ID" VARCHAR(255) NOT NULL,
-    "recording_duration" INTEGER NULL,
-    "console_error_count" INTEGER NULL,
-    "created_at" TIMESTAMP WITH TIME ZONE NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP WITH TIME ZONE NULL DEFAULT CURRENT_TIMESTAMP,
-    "review_status" review_status_type NULL DEFAULT 'Pending',
-    "error_reason" TEXT NULL,
-    "skipped_reason" TEXT NULL,
-    
-    -- Session analysis fields
-    "total_duration_seconds" INTEGER NULL,
-    "total_events" INTEGER NULL,
-    "user_id" VARCHAR NULL,
-    "frontegg_id" VARCHAR NULL,
-    "client_id" VARCHAR NULL,
-    "tenant_id" VARCHAR NULL,
-    "session_id" VARCHAR NULL,
-    "assignment_id" VARCHAR NULL,
-    "pl_group_id" INTEGER NULL,
-    "schedule_id" VARCHAR NULL,
-    "activity_type" VARCHAR NULL,
-    "experience_type" VARCHAR NULL,
-    "simulation_data_type" VARCHAR NULL,
-    "active_feature_flags" TEXT[] NULL,
-    "event_timeline" JSONB NULL,
-    
-    -- New sharing fields
-    "public_url" TEXT NULL,
-    "sharing_enabled" BOOLEAN NULL DEFAULT FALSE,
-    
-    -- AI Analysis fields
-    "ai_analysis" JSONB NULL,
-    "ai_analysis_metadata" JSONB NULL,
-    
-    CONSTRAINT PostHog_Recordings_Review_Queue_pkey PRIMARY KEY ("id"),
-    CONSTRAINT PostHog_Recordings_Review_Queue_PostHog_ID_key UNIQUE ("PostHog_ID"),
-    CONSTRAINT fk_posthog_recording 
-        FOREIGN KEY ("PostHog_ID") 
-        REFERENCES "Posthog_Recordings_Raw"("PostHog_ID")
-        ON DELETE CASCADE,
-    CONSTRAINT check_error_reason 
-        CHECK (
-            (review_status = 'Error' AND error_reason IS NOT NULL) OR 
-            (review_status != 'Error' AND error_reason IS NULL)
-        ),
-    CONSTRAINT check_skipped_reason 
-        CHECK (
-            (review_status = 'Skipped' AND skipped_reason IS NOT NULL) OR 
-            (review_status != 'Skipped' AND skipped_reason IS NULL)
+create table
+  public."PostHog_Recordings_Review_Queue" (
+    id uuid not null default extensions.uuid_generate_v4 (),
+    "PostHog_ID" character varying(255) not null,
+    recording_duration integer null,
+    console_error_count integer null,
+    created_at timestamp with time zone null default current_timestamp,
+    updated_at timestamp with time zone null default current_timestamp,
+    review_status public.review_status_type null default 'Pending'::review_status_type,
+    error_reason text null,
+    skipped_reason text null,
+    total_duration_seconds integer null,
+    total_events integer null,
+    user_id character varying null,
+    frontegg_id character varying null,
+    client_id character varying null,
+    tenant_id character varying null,
+    session_id character varying null,
+    assignment_id character varying null,
+    pl_group_id integer null,
+    schedule_id character varying null,
+    activity_type character varying null,
+    experience_type character varying null,
+    simulation_data_type character varying null,
+    active_feature_flags text[] null,
+    event_timeline jsonb null,
+    public_url text null,
+    sharing_enabled boolean null default false,
+    ai_analysis jsonb null,
+    ai_analysis_metadata jsonb null,
+    trace_url text null,
+    constraint posthog_recordings_review_queue_pkey primary key (id),
+    constraint posthog_recordings_review_queue_posthog_id_key unique ("PostHog_ID"),
+    constraint fk_posthog_recording foreign key ("PostHog_ID") references "Posthog_Recordings_Raw" ("PostHog_ID") on delete cascade,
+    constraint check_error_reason check (
+      (
+        (
+          (review_status = 'Error'::review_status_type)
+          and (error_reason is not null)
         )
-) TABLESPACE pg_default;
+        or (
+          (review_status <> 'Error'::review_status_type)
+          and (error_reason is null)
+        )
+      )
+    ),
+    constraint check_skipped_reason check (
+      (
+        (
+          (review_status = 'Skipped'::review_status_type)
+          and (skipped_reason is not null)
+        )
+        or (
+          (review_status <> 'Skipped'::review_status_type)
+          and (skipped_reason is null)
+        )
+      )
+    )
+  ) tablespace pg_default;
 
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_recordings_review_queue_posthog_id 
-ON "PostHog_Recordings_Review_Queue" USING btree ("PostHog_ID") TABLESPACE pg_default;
+create index if not exists idx_recordings_review_queue_posthog_id on public."PostHog_Recordings_Review_Queue" using btree ("PostHog_ID") tablespace pg_default;
 
-CREATE INDEX IF NOT EXISTS idx_recordings_review_queue_status 
-ON "PostHog_Recordings_Review_Queue" USING btree (review_status) TABLESPACE pg_default;
-
--- Add index for AI analysis fields (optional, but helpful if you plan to query these fields)
-CREATE INDEX IF NOT EXISTS idx_recordings_review_queue_ai_analysis 
-ON "PostHog_Recordings_Review_Queue" USING gin ("ai_analysis") TABLESPACE pg_default; 
+create index if not exists idx_recordings_review_queue_status on public."PostHog_Recordings_Review_Queue" using btree (review_status) tablespace pg_default;

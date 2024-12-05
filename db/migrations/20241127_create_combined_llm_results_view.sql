@@ -1,4 +1,4 @@
-create or replace view
+create view
   public.combined_llm_results as
 select
   coalesce(v.id, t.id) as id,
@@ -62,13 +62,15 @@ select
   vr.ai_analysis as vapi_transcript_ai_analysis,
   pr.ai_analysis as posthog_vision_ai_analysis,
   vr.transcript,
-  v.report_review_phase_smooth,  -- New column added
-  v.report_review_phase_details   -- New column added
+  v.report_review_phase_smooth,
+  v.report_review_phase_details,
+  cm.client_name
 from
   "LLM_Vision_Results" v
   full join "LLM_Transcript_Results" t on v.session_id::uuid = t.session_id
   left join "PostHog_Recordings_Review_Queue" pr on v.posthog_id::text = pr."PostHog_ID"::text
   left join "Vapi_Transcripts_Review_Queue" vr on t.vapi_call_id = vr.vapi_call_id
+  left join "Client_Mappings" cm on pr.tenant_id::text = cm.tenant_id
 where
   v.id is not null
   or t.id is not null;
