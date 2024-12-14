@@ -7,10 +7,10 @@ import { eq, desc, inArray } from "drizzle-orm";
 export interface AdminResultsInput {
   uniqueId: string;
   phaseType: string | null;
-  feedbackType: 'phase' | 'boss';
+  feedbackType: 'phase';
   sentiment: 'up' | 'down' | null;
   isFlagged: boolean;
-  overrideStatus: 'yes' | 'partial' | 'no' | 'notreached' | null;
+  overrideStatus: "yes" | "partial" | "no" | "notreached" | null;
   comment: string | null;
   updatedAt?: Date;
 }

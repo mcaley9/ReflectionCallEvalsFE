@@ -1,24 +1,47 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { X, ExternalLink } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, ThumbsDown, Flag } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { submitFeedback } from "@/app/actions/feedback-actions";
-import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+function InfoLabel({ label, value }: { label: string; value: string }) {
+  const getColor = (value: string) => {
+    switch (value.toLowerCase()) {
+      case 'yes':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'no':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'partial':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 py-2.5">
+      <span className="text-base font-medium flex-1">{label}</span>
+      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${getColor(value)}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
 
 interface PhaseDetailsProps {
   id: string;
   phaseType: string;
-  details: string | null;
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -26,21 +49,11 @@ interface PhaseDetailsProps {
   uniqueId: string;
   publicUrl?: string;
   vapiCallId?: string | null;
-  existingFeedback?: {
-    sentiment: 'up' | 'down' | null;
-    is_flagged: boolean;
-    override_status: "yes" | "partial" | "no" | "notreached" | null;
-    comment: string | null;
-  };
 }
 
-// First, let's define a type for the valid status values
-type StatusType = 'yes' | 'partial' | 'no' | 'notreached';
-
-export function PhaseDetails({ 
-  id, 
-  phaseType, 
-  details, 
+export function PhaseDetails({
+  id,
+  phaseType,
   children,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
@@ -48,36 +61,30 @@ export function PhaseDetails({
   uniqueId,
   publicUrl: propPublicUrl,
   vapiCallId: propVapiCallId,
-  existingFeedback
 }: PhaseDetailsProps) {
-  const { toast } = useToast();
   const [internalOpen, setInternalOpen] = useState(false);
-  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
-  const [isFlagged, setIsFlagged] = useState(false);
-  const [comment, setComment] = useState('');
-  // Update the type of overrideStatus to match the RadioGroup values
-  const [overrideStatus, setOverrideStatus] = useState<StatusType | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const onOpenChange = isControlled ? controlledOnOpenChange : setInternalOpen;
 
-  // Load existing feedback when dialog opens
+  const [data, setData] = useState<{
+    phases?: any;
+    metadata?: any;
+  }>({});
+
   useEffect(() => {
-    if (open && existingFeedback) {
-      setFeedback(existingFeedback.sentiment);
-      setIsFlagged(existingFeedback.is_flagged);
-      // Cast the override_status to StatusType if it matches one of the valid values
-      if (existingFeedback.override_status && 
-          ['yes', 'partial', 'no', 'notreached'].includes(existingFeedback.override_status)) {
-        setOverrideStatus(existingFeedback.override_status as StatusType);
-      } else {
-        setOverrideStatus(null);
-      }
-      setComment(existingFeedback.comment || '');
+    if (open && uniqueId) {
+      // Fetch details from the new unified endpoint
+      fetch(`/api/session-analysis/${uniqueId}/details`)
+        .then(res => res.json())
+        .then(json => {
+          setData(json);
+        })
+        .catch(err => {
+          console.error('Error fetching phase details:', err);
+        });
     }
-  }, [open, existingFeedback]);
+  }, [open, uniqueId]);
 
   const handleClick = () => {
     if (onOpenChange) {
@@ -85,276 +92,178 @@ export function PhaseDetails({
     }
   };
 
-  const formatDetails = (details: string | null) => {
-    if (!details) return { formattedText: 'No details available', publicUrl: null, vapiCallId: null };
-    
-    try {
-      const parsed = typeof details === 'string' ? JSON.parse(details) : details;
-      console.log('PhaseDetails - Initial Parsed Data:', parsed);
-      
-      // Extract publicUrl and vapiCallId before any other processing
-      const parsedPublicUrl = parsed.publicUrl || null;
-      const vapiCallId = parsed.vapiCallId || null;
-      console.log('PhaseDetails - Extracted VapiCallId:', vapiCallId);
-      
-      let formattedText;
-      if (phaseType === 'session') {
-        // Format regular session details
-        const regularDetails = Object.entries(parsed)
-          .filter(([key]) => key !== 'timeline' && key !== 'publicUrl')
-          .map(([key, value]) => `${key}: ${value || 'N/A'}`)
-          .join('\n');
-        
-        // Format timeline if it exists
-        const timeline = parsed.timeline;
-        
-        formattedText = regularDetails;
-        if (timeline) {
-          const formattedTimeline = typeof timeline === 'string' ? timeline : JSON.stringify(timeline, null, 2);
-          formattedText = `${regularDetails}\n\nTimeline:\n${formattedTimeline}`;
-        }
-      } else {
-        // For all other phase types
-        formattedText = JSON.stringify(parsed, null, 2);
-      }
-      
-      return {
-        formattedText,
-        publicUrl: parsedPublicUrl,
-        vapiCallId
-      };
-    } catch (e) {
-      console.error('PhaseDetails - Error parsing details:', e);
-      // If parsing fails, return the original string
-      return {
-        formattedText: details,
-        publicUrl: null,
-        vapiCallId: null
-      };
-    }
-  };
-
-  const formattedResult = formatDetails(details);
-  const detailsText = formattedResult.formattedText;
-  const detailsPublicUrl = formattedResult.publicUrl;
-  const detailsVapiCallId = formattedResult.vapiCallId;
+  // Extract the current info and metadata from the fetched data
+  const phaseKey = phaseType
+    .replace(/\s/g, '_')
+    .replace('-', '_')
+    .toLowerCase(); // map "auth phase" -> "auth", "selection phase" -> "selection_phase", etc.
   
-  // Use either the prop values or the ones from details
-  const finalPublicUrl = propPublicUrl || detailsPublicUrl;
-  const finalVapiCallId = propVapiCallId || detailsVapiCallId;
+  const phaseData = data.phases?.[phaseKey] || {};
+  const metadata = data.metadata || {};
 
-  console.log('PhaseDetails - Final Values:', {
-    propVapiCallId,
-    detailsVapiCallId,
-    finalVapiCallId,
-    phaseType
-  });
+  // Determine if it's a yes/no/partial for the "current info" tab
+  // For auth/selection/initiation/report_review phases, we use `smooth` boolean.
+  // For greet_student, understand_feelings, etc., we use `score`.
+  let usedNameVal = metadata.used_name || 'No';
+  let warmGreetingVal = metadata.warm_greeting || 'No';
+  let waitedForResponseVal = metadata.waited_for_response || 'No';
 
-  console.log('Details:', details);
-  console.log('Formatted Result:', formattedResult);
-  console.log('Public URL:', detailsPublicUrl);
+  // The "Current Info" tab is originally designed for the selection phase details.
+  // We'll generalize it: if we have a `score` or `smooth` boolean, we show them.
+  let currentValueLabel = 'No';
+  if (phaseData.score) {
+    currentValueLabel = phaseData.score;
+  } else if (typeof phaseData.smooth === 'boolean') {
+    currentValueLabel = phaseData.smooth ? 'Yes' : 'No';
+  }
 
-  const handleSubmitFeedback = async () => {
-    try {
-      setIsSubmitting(true);
-      await submitFeedback({
-        uniqueId,
-        phaseType,
-        feedbackType: 'phase',
-        sentiment: feedback,
-        isFlagged,
-        overrideStatus,
-        comment: comment || null
-      });
-
-      toast({
-        title: "Feedback submitted",
-        description: "Your feedback has been saved successfully.",
-      });
-
-      // Close the dialog
-      if (onOpenChange) {
-        onOpenChange(false);
-      }
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit feedback. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Add a handler for RadioGroup value changes
-  const handleStatusChange = (value: string) => {
-    if (value === '') {
-      setOverrideStatus(null);
-    } else if (['yes', 'partial', 'no', 'notreached'].includes(value)) {
-      setOverrideStatus(value as StatusType);
-    }
-  };
+  // For the transcript tab:
+  const transcript = metadata.transcript || '';
 
   return (
     <>
-      {children && (
-        <div onClick={handleClick} className="cursor-pointer">
-          {children}
-        </div>
-      )}
+      <div onClick={handleClick} className="cursor-pointer">
+        {children}
+      </div>
 
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent onClick={(e) => e.stopPropagation()}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {phaseType === 'session' ? 'Session Details' : 
-                `${phaseType.charAt(0).toUpperCase() + phaseType.slice(1)} Details`}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">
+                {phaseType.charAt(0).toUpperCase() + phaseType.slice(1)} Details
+              </DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => onOpenChange?.(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
           
-          <div className="mt-4">
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-[400px] text-sm whitespace-pre-wrap">
-              {detailsText}
-            </pre>
-          </div>
-
-          {/* PostHog URL and VapiCall URL */}
-          <div className="mt-2 flex justify-end gap-2">
-            {finalPublicUrl && (
-              <a 
-                href={finalPublicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm px-3 py-2 rounded-md bg-blue-50"
-              >
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-                View in PostHog
-              </a>
-            )}
-            {finalVapiCallId && (
-              <a 
-                href={`https://dashboard.vapi.ai/calls/${finalVapiCallId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm px-3 py-2 rounded-md bg-blue-50"
-              >
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                </svg>
-                View Call
-              </a>
-            )}
-          </div>
-
-          {/* Only show feedback section for non-session details */}
-          {phaseType !== 'session' && (
-            <>
-              {/* Status Override Section */}
-              <div className="mt-6 space-y-2 border-t pt-4">
-                <h3 className="font-semibold text-sm">Status</h3>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>AI Status:</span>
-                  <span className="font-medium">{currentStatus}</span>
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="current">Current Info</TabsTrigger>
+              <TabsTrigger value="metadata">Metadata</TabsTrigger>
+              <TabsTrigger value="transcript">Transcript</TabsTrigger>
+            </TabsList>
+            
+            {/* Current Info Tab */}
+            <TabsContent value="current" className="mt-4">
+              <div className="rounded-lg border p-6">
+                <div className="space-y-0.5 mb-8">
+                  {/* Show relevant info: if this is a greet or other mid-phase,
+                      used_name/warm_greeting/waited_for_response might not be relevant.
+                      We'll always show them anyway since user requested original fields. */}
+                  <InfoLabel label="Used Name" value={usedNameVal} />
+                  <InfoLabel label="Warm Greeting" value={warmGreetingVal} />
+                  <InfoLabel label="Waited for Response" value={waitedForResponseVal} />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">Override Status</Label>
-                  <RadioGroup
-                    value={overrideStatus || ""}
-                    onValueChange={handleStatusChange}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="yes" />
-                      <Label htmlFor="yes" className="text-green-600 font-medium">Green</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="partial" id="partial" />
-                      <Label htmlFor="partial" className="text-yellow-600 font-medium">Yellow</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="no" />
-                      <Label htmlFor="no" className="text-red-600 font-medium">Red</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="notreached" id="notreached" />
-                      <Label htmlFor="notreached" className="text-gray-400 font-medium">Grey</Label>
-                    </div>
-                  </RadioGroup>
+                <div className="flex justify-end gap-3">
+                  {propVapiCallId && (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(`https://dashboard.vapi.ai/calls/${propVapiCallId}`, '_blank')}
+                      className="gap-2"
+                    >
+                      View VAPI Call
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {metadata && metadata.public_url && (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(metadata.public_url, '_blank')}
+                      className="gap-2"
+                    >
+                      View PostHog
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
-
-              {/* Feedback Section */}
-              <div className="mt-6 space-y-4">
-                <div className="flex gap-4 items-center">
-                  <Button
-                    variant={feedback === 'up' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
-                  >
-                    <ThumbsUp className="w-4 h-4 mr-1" />
-                    AI Got It Right
-                  </Button>
-                  <Button
-                    variant={feedback === 'down' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
-                  >
-                    <ThumbsDown className="w-4 h-4 mr-1" />
-                    AI Got It Wrong
-                  </Button>
-                  <Button
-                    variant={isFlagged ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setIsFlagged(!isFlagged)}
-                  >
-                    <Flag className="w-4 h-4 mr-1" />
-                    Flag
-                  </Button>
+            </TabsContent>
+            
+            {/* Metadata Tab */}
+            <TabsContent value="metadata" className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Field</TableHead>
+                    <TableHead>Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">Activity Type</TableCell>
+                    <TableCell>{metadata.activity_type}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Experience Type</TableCell>
+                    <TableCell>{metadata.experience_type}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Call Type</TableCell>
+                    <TableCell>{metadata.call_type}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Started At</TableCell>
+                    <TableCell>{new Date(metadata.started_at).toLocaleString()}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Ended At</TableCell>
+                    <TableCell>{new Date(metadata.ended_at).toLocaleString()}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Duration (minutes)</TableCell>
+                    <TableCell>{metadata.duration_minutes}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Ended Reason</TableCell>
+                    <TableCell>{metadata.ended_reason}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TabsContent>
+            
+            {/* Transcript Tab */}
+            <TabsContent value="transcript" className="mt-4">
+              <ScrollArea className="h-[400px] rounded-lg border p-4">
+                <div className="space-y-4">
+                  {transcript.split('\n').map((line, index) => {
+                    if (line.startsWith('System:')) {
+                      return (
+                        <p key={index} className="text-sm text-muted-foreground">
+                          {line}
+                        </p>
+                      );
+                    }
+                    if (line.startsWith('AI Guide:')) {
+                      return (
+                        <div key={index} className="flex gap-2">
+                          <div className="min-w-[80px] text-sm font-medium text-primary">AI Guide:</div>
+                          <p className="text-sm">{line.replace('AI Guide:', '')}</p>
+                        </div>
+                      );
+                    }
+                    if (line.startsWith('Student:')) {
+                      return (
+                        <div key={index} className="flex gap-2">
+                          <div className="min-w-[80px] text-sm font-medium text-secondary">Student:</div>
+                          <p className="text-sm font-medium">{line.replace('Student:', '')}</p>
+                        </div>
+                      );
+                    }
+                    return <p key={index} className="text-sm">{line}</p>;
+                  })}
                 </div>
-
-                <Textarea
-                  placeholder="Add your comments here..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="min-h-[100px]"
-                />
-
-                <Button 
-                  className="w-full"
-                  onClick={handleSubmitFeedback}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            </>
-          )}
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </>
   );
-} 
+}

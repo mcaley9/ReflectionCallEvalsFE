@@ -3,13 +3,13 @@ import { FileText } from 'lucide-react';
 export const ROW_CONFIGS = [
   {
     label: "Perfectly Smooth",
-    getValue: (result: any) => result.smoothnessLevel,
+    getValue: (result: any) => result.smoothnessLevel === 'completely_smooth' ? 'yes' : 'no',
     phaseType: "overall",
     bgColor: "bg-gray-50"
   },
   {
     label: "Auth Phase",
-    getValue: (result: any) => result.authPhaseSmooth,
+    getValue: (result: any) => result.authPhaseSmooth ? 'yes' : 'no',
     getDetails: (result: any) => JSON.stringify({
       ...result.authPhaseDetails,
       publicUrl: result.publicUrl,
@@ -20,7 +20,7 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Selection Phase",
-    getValue: (result: any) => result.selectionPhaseSmooth,
+    getValue: (result: any) => result.selectionPhaseSmooth ? 'yes' : 'no',
     getDetails: (result: any) => JSON.stringify({
       ...result.selectionPhaseDetails,
       publicUrl: result.publicUrl,
@@ -31,7 +31,7 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Initiation Phase",
-    getValue: (result: any) => result.initiationPhaseSmooth,
+    getValue: (result: any) => result.initiationPhaseSmooth ? 'yes' : 'no',
     getDetails: (result: any) => JSON.stringify({
       ...result.initiationPhaseDetails,
       publicUrl: result.publicUrl,
@@ -42,7 +42,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Greet Student",
-    getValue: (result: any) => result.greetStudentScore,
+    getValue: (result: any) => {
+      const score = result.greetStudentScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.greetStudentCriteria,
       publicUrl: result.publicUrl,
@@ -53,7 +58,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Understand Feelings",
-    getValue: (result: any) => result.understandFeelingsScore,
+    getValue: (result: any) => {
+      const score = result.understandFeelingsScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.understandFeelingsCriteria,
       publicUrl: result.publicUrl,
@@ -64,7 +74,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Provide Overview",
-    getValue: (result: any) => result.provideOverviewScore,
+    getValue: (result: any) => {
+      const score = result.provideOverviewScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.provideOverviewCriteria,
       publicUrl: result.publicUrl,
@@ -75,7 +90,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Goal Review",
-    getValue: (result: any) => result.goalReviewScore,
+    getValue: (result: any) => {
+      const score = result.goalReviewScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.goalReviewCriteria,
       publicUrl: result.publicUrl,
@@ -86,7 +106,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Competency Review",
-    getValue: (result: any) => result.competencyReviewScore,
+    getValue: (result: any) => {
+      const score = result.competencyReviewScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.competencyReviewCriteria,
       publicUrl: result.publicUrl,
@@ -97,7 +122,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Purpose Review",
-    getValue: (result: any) => result.purposeReviewScore,
+    getValue: (result: any) => {
+      const score = result.purposeReviewScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.purposeReviewCriteria,
       publicUrl: result.publicUrl,
@@ -108,7 +138,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Key Events Reflection",
-    getValue: (result: any) => result.keyEventsReflectionScore,
+    getValue: (result: any) => {
+      const score = result.keyEventsReflectionScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.keyEventsReflectionCriteria,
       publicUrl: result.publicUrl,
@@ -119,7 +154,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Goal Setting",
-    getValue: (result: any) => result.goalSettingScore,
+    getValue: (result: any) => {
+      const score = result.goalSettingScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.goalSettingCriteria,
       publicUrl: result.publicUrl,
@@ -130,7 +170,12 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Closing",
-    getValue: (result: any) => result.closingScore,
+    getValue: (result: any) => {
+      const score = result.closingScore;
+      if (!score) return null;
+      return score.toLowerCase() === 'yes' ? 'yes' : 
+             score.toLowerCase() === 'partial' ? 'partial' : 'no';
+    },
     getDetails: (result: any) => JSON.stringify({
       ...result.closingCriteria,
       publicUrl: result.publicUrl,
@@ -141,7 +186,7 @@ export const ROW_CONFIGS = [
   },
   {
     label: "Post-Call Report Review",
-    getValue: (result: any) => result.reportReviewPhaseSmooth,
+    getValue: (result: any) => result.reportReviewPhaseSmooth ? 'yes' : 'no',
     getDetails: (result: any) => JSON.stringify({
       ...result.reportReviewPhaseDetails,
       publicUrl: result.publicUrl,

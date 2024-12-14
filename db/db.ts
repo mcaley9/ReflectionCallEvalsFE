@@ -1,23 +1,24 @@
-import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { profilesTable, adminResultsInputTable } from "./schema";
-import { combinedLLMResults } from "./schema/combined-llm-results-schema";
-import { llmBossResults } from "./schema/llm-boss-results-schema";
+import { 
+  adminResultsInputTable,
+  profilesTable,
+  posthogCompletedAnalysisView,
+  vapiCompletedAnalysisView 
+} from "./schema";
 
-config({ path: ".env.local" });
+// Create a new connection to the database
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not defined");
+}
 
-const client = postgres(process.env.DATABASE_URL!, {
-  max: 1,
-  idle_timeout: 20,
-  connect_timeout: 10
-});
-
-export const db = drizzle(client, { 
+const client = postgres(connectionString);
+export const db = drizzle(client, {
   schema: {
-    profiles: profilesTable,
-    combinedLLMResults,
-    llmBossResults,
-    adminResultsInput: adminResultsInputTable
-  }
+    profilesTable,
+    adminResultsInputTable,
+    posthogCompletedAnalysisView,
+    vapiCompletedAnalysisView,
+  },
 });

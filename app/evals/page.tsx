@@ -43,7 +43,6 @@ interface Result {
 interface Feedback {
   uniqueId: string;
   phaseType: string | null;
-  feedbackType: 'phase' | 'boss';
   sentiment: 'up' | 'down' | null;
   isFlagged: boolean;
   overrideStatus: "yes" | "partial" | "no" | "notreached" | null;
@@ -73,6 +72,8 @@ export default async function EvalsPage({
     throw new Error("Failed to load evaluation results. Please try again later.");
   }
 
+  console.log('Raw Results from DB:', JSON.stringify(results[0], null, 2));
+
   // Filter results by selected client if one is selected
   const filteredResults = selectedClient 
     ? results.filter(r => r.clientName === selectedClient)
@@ -88,18 +89,18 @@ export default async function EvalsPage({
     validResults.map(result => result.uniqueId!)
   );
   
-  // Create a map of feedback by uniqueId and phaseType/feedbackType
+  // Create a map of feedback by uniqueId and phaseType
   const feedbackMap = new Map<string, Map<string, AdminResultsInput>>();
   
   // Group feedback by uniqueId and phase, keeping only the most recent
-  feedbackData.forEach((feedback: AdminResultsInput) => {
+  feedbackData.forEach((feedback) => {
     const key = feedback.uniqueId;
     if (!feedbackMap.has(key)) {
       feedbackMap.set(key, new Map());
     }
     
-    // Create a unique key for the phase/feedback type
-    const phaseKey = feedback.feedbackType === 'boss' ? 'overall' : feedback.phaseType || '';
+    // Create a unique key for the phase
+    const phaseKey = feedback.phaseType || '';
     
     // Get the current map of phases for this uniqueId
     const phasesMap = feedbackMap.get(key)!;
@@ -123,31 +124,16 @@ export default async function EvalsPage({
   // Pre-compute all row data
   const rowsData = ROW_CONFIGS.map(config => {
     const resultData = filteredResults.map(result => {
-      const value = config.label === "Perfectly Smooth" 
-        ? mapSmoothnessToStatus(config.getValue(result))
-        : config.getValue(result);
+      const value = config.getValue(result);
+      console.log(`Value for ${config.label}:`, { value, result });
       
-      const details = config.label === "Perfectly Smooth"
-        ? getOverallStatusDetails(result)
-        : config.getDetails?.(result);
-
-      // Get feedback for this uniqueId and phase
-      const feedback = result.uniqueId 
-        ? feedbackMap.get(result.uniqueId)?.get(config.phaseType)
-        : null;
-
       return {
         id: result.id,
         uniqueId: result.uniqueId,
         value,
-        details,
-        overrideStatus: feedback?.overrideStatus ?? null,
-        existingFeedback: feedback ? {
-          sentiment: feedback.sentiment,
-          is_flagged: feedback.isFlagged,
-          override_status: feedback.overrideStatus,
-          comment: feedback.comment
-        } : undefined
+        details: config.getDetails?.(result),
+        overrideStatus: null,
+        existingFeedback: undefined
       };
     });
 
